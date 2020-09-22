@@ -58,15 +58,19 @@
 
     </style>
     <title>Deep Learning Solutions to your Neural Issues</title>
+    <link rel="shortcut icon" href="/ml_brain.png" type="image/png">
 </head>
 
 <body ng-controller="AppCtrl">
-    <div>
+    <div style="background-color: azure">
         <md-content>
-            <div style="background-image: url('ml_brain.png');">
+            <div >
                 <section>
-                    <h1>NEURAL PARK</h1>
-                    <p>One Place stop shop for Deep Learning activities</p>
+                    <h1 style="align-content: center; font-family: sans-serif; font-size: larger"><b>NEURO COGNITION</b></h1>
+                    <p>Neuro-Cognition.app provides a simple interface for deep learning engineers and AI practitioners
+                        to experiment with
+                        that takes in the data, and the requested parameters (Layers, batch-size, learning rate),tunes
+                        the neural network and automatically generates the code in python</p>
                 </section>
             </div>
             <div layout="row">
@@ -121,6 +125,9 @@
 
                 </md-input-container>
 
+                <md-button class="md-fab" style="background-color: azure" ng-href="/auth/google">
+                    <md-icon md-svg-icon="google.svg" >Login</md-icon>
+                </md-button>
             </div>
 
 
@@ -164,7 +171,7 @@
                                 </md-slider>
                                 </md-slider-container>
                                 <md-input-container>
-                                    <input type="number" min="20" max="150" ng-model="int_Batch" aria-label="blue" aria-controls="blue-slider" ng-disabled="hyperpara_disabled">
+                                    <input type="number" min="1" max="150" ng-model="int_Batch" aria-label="blue" aria-controls="blue-slider" ng-disabled="hyperpara_disabled">
                                 </md-input-container >
                             </md-content>
                                </section>
