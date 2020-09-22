@@ -1,17 +1,22 @@
     /**
  * Created by PRANJAL VYAS on 5/29/2020.
  */
-const express =     require('express');
+const express = require('express');
+const exphbs = require ('express-handlebars');
 const app = express() ;
 const body_parser = require('body-parser');
 const mongoose = require('mongoose');
 const spawn = require('child_process').spawn;
 const fs = require('fs');
 const socket = require('socket.io');
+const passport = require('passport');
+const session = require('express-session');
 //const dontenv = require('dotenv');
 
 require('./Models/db');
-    const NN_schema = mongoose.model('Neural_Model');
+    const user = mongoose.model('User');
+
+require('./passport')(passport);
 
 var params = [] ;
 var params_rcvd = false ;
@@ -24,7 +29,22 @@ app.use(body_parser.urlencoded({limit : '150mb' , extended : false}));
 app.use(express.json({limit : '150mb', extended : true, parameterLimit: 50000 }));
 app.use(express.urlencoded({limit : '150mb', extended : true, parameterLimit: 50000 }));
 //app.use()
+app.engine('.hbs', exphbs({ defaultLayout : 'login', extname : '.hbs' })); app.set('view engine', '.hbs');
+
+
 app.use(express.static(__dirname + '/frontend'));
+
+    app.use(session({
+        secret: 'keyboard cat',
+        resave: false,
+        saveUninitialized: false
+    }));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use('/login',require('./routes/index'));
+app.use('/auth',require('./routes/auth'));
 
 //database initialization:
 
@@ -187,13 +207,16 @@ io.on('connection', function(socket) {
 
     function paramstodatabase()
 {
-    var NeuralNetworkmodel = new NN_schema() ;
-    NeuralNetworkmodel.fliename = params[14] ;
-    NeuralNetworkmodel.layers = params[6] ;
-    NeuralNetworkmodel.neurons = params[7] ;
-    NeuralNetworkmodel.ptype = params[1] ;
-    NeuralNetworkmodel.save();
+    var NeuralNetworkmodel =
+    {
+        fliename : params[14],
+        layers : params[6] ,
+        neurons : params[7],
+        ptype : params[1]
 
+    };
+    user.NeuralNet = NeuralNetworkmodel ;
+    user.save() ;
 }
 
 
