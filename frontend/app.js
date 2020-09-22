@@ -19,6 +19,7 @@ var final_headers = [] ;
 var target ;
 var droputs = [0.1, 0.1, 0.1, 0.1];
 var socket ;
+var login_counter = 0 ;
 
     angular.module('webapp', ['ngMaterial'])
     .controller('AppCtrl', function($scope, $http, $mdDialog) {
@@ -447,6 +448,12 @@ var socket ;
             $scope.progressivebar2 = false;
             $scope.Upload_btn_disable = true ;
 
+            if(login_counter>2)
+            {
+                $scope.logindialog() ;
+            }
+
+
             $http.get('/data',
                 {
                     params : {
@@ -603,7 +610,8 @@ var socket ;
                             }
                             line_chart_builder($('#Metrics-Chart'), $scope.graph_datasets,100) ;
                             $scope.showgraph = true;
-                            console.log($scope.showgraph);
+                            //console.log($scope.showgraph);
+                            login_counter++
                         });
 
                     });
@@ -629,6 +637,10 @@ var socket ;
             $scope.Isresetdisabled = true ;
             $scope.hyperpara_disabled = false ;
             $scope.Upload_btn_disable = false ;
+            $scope.Upload_btn = 'Upload' ;
+            $scope.graph_datasets.splice(0,$scope.graph_datasets.length);
+            $scope.code = null ;
+            $scope.showgraph = false ;
 
         };
 
@@ -641,7 +653,9 @@ var socket ;
         $scope.addexcel = function()
         {
             $scope.progressivebar = false ;
-             // Import local excel files to the website
+            $scope.headers.splice(0,$scope.headers.length);
+
+            // Import local excel files to the website
            //// var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xlsx|.xls)$/;
             var xlsxflag = false; /*Flag for checking whether excel is .xls format or .xlsx format*/
             if ($("#xls_file").val().toLowerCase().indexOf(".xlsx") > 0) {
@@ -728,7 +742,7 @@ var socket ;
                                 body : tabular_data
 
                             });
-                    $scope.Upload_btn = 'Uploaded File' ;
+                    $scope.Upload_btn = 'Uploaded' ;
                     $scope.Upload_btn_disable = true ;
                     //}
 
@@ -817,7 +831,7 @@ var socket ;
                 templateUrl: 'MLP_dialog.html',
                 parent: angular.element(document.body),
                 targetEvent: ev,
-                clickOutsideToClose:true,
+                clickOutsideToClose:false,
                 locals : {
                    // percp : $scope.percp,
                     //activationfunc : $scope.activationfunc,
@@ -836,12 +850,13 @@ var socket ;
                 templateUrl: 'Input-Headers.html',
                 parent: angular.element(document.body),
                 targetEvent: ev,
-                clickOutsideToClose:true,
+                clickOutsideToClose:false,
                 locals : {
                     headers : $scope.headers
                 }
             })
         };
+
 
         function IP_Header_Controller($scope, $mdDialog, headers) {
 
@@ -925,6 +940,35 @@ var socket ;
             }
         }
 
+            $scope.logindialog = function ()
+            {
+                $mdDialog.show({
+                    controller : Login_Controller,
+                    templateUrl : '',
+                    parent : angular.element(document.body),
+                    clickOutsideToClose : false
+                })
+            };
+
+         function Login_Controller()
+         {
+             $scope.hide = function() {
+                 $mdDialog.hide();
+             };
+
+             $scope.cancel = function() {
+                 $mdDialog.cancel();
+             };
+
+             $scope.answer = function()
+             {
+
+             }
+
+
+         }
+
+
 
     });
 
@@ -955,3 +999,6 @@ angular.module('webapp', ['ngMaterial']).factory('socket', function ($rootScope)
     };
 });
 */
+
+// Google API client id : 95188641970-b5dpuie1d0kevhgecfogpjfptfank8k9.apps.googleusercontent.com
+// Google API client secret : aaPScCfl7yVlUS1aDRp6RIR0

@@ -13,4 +13,31 @@ var NN_Schema = new mongoose.Schema({
 
 });
 
-mongoose.model('Neural_Model',NN_Schema);
+var User_info = new mongoose.Schema({
+   UserName : {type : String,
+                required : true
+   },
+
+    googleId : {type : String,
+        unique : true
+    },
+
+    firstname : {type : String,
+        required : true
+    },
+
+    lastname : {type : String,
+        required : true
+    },
+
+    image : {type : String,
+        required : true
+    },
+
+
+    NeuralNet : { type : [NN_Schema]}
+});
+
+
+//mongoose.model('Neural_Model',NN_Schema);
+mongoose.model('User',User_info);
