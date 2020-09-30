@@ -21,8 +21,8 @@ var droputs = [0.1, 0.1, 0.1, 0.1];
 var socket ;
 var login_counter = 0 ;
 
-    angular.module('webapp', ['ngMaterial'])
-    .controller('AppCtrl', function($scope, $http, $mdDialog) {
+    angular.module('webapp', ['ngMaterial', 'ngCookies'])
+    .controller('AppCtrl', function($scope, $http, $mdDialog, $cookies) {
 
         //List of Options for the NN Framework
         $scope.strlist_frmwrk = ['Keras', 'PyTorch'];
@@ -71,7 +71,9 @@ var login_counter = 0 ;
         $scope.play_tooltip = 'No File has been Uploaded' ;
         $scope.stop_tooltip = ' Stop Neural Network Tuning and Reset Parameters : Currently Not Tuning any network';
         $scope.code = ' ';
-
+        $scope.FABOpen = true ;   $scope.Isguest = false ; $scope.showdrop = false ;
+        $scope.username= 'Guest' ;
+        $scope.profile = 'user.svg';
 
 
         var elem = document.getElementById('NN_park');
@@ -111,6 +113,8 @@ var login_counter = 0 ;
 
         two.update();
 
+        //$cookies.put('user','name') ;
+        Login();
         function addneuron(x,y,r)
         {
             var circle = two.makeCircle(x, y, r);
@@ -448,10 +452,10 @@ var login_counter = 0 ;
             $scope.progressivebar2 = false;
             $scope.Upload_btn_disable = true ;
 
-            if(login_counter>2)
+          /*  if(login_counter>2)
             {
                 $scope.logindialog() ;
-            }
+            }*/
 
 
             $http.get('/data',
@@ -473,7 +477,7 @@ var login_counter = 0 ;
                         filename : $scope.filename
                     }
 
-                }).success(function (res){
+                }).then(function (res){
                     //console.log(res);
                     socket = io.connect('http://localhost:3000');
                     socket.on('metrics',function(response){
@@ -485,6 +489,8 @@ var login_counter = 0 ;
                             var loss = response.loss ;
                             var val_loss = response.val_loss ;
                             loss = str2numarr(loss);
+
+
                             val_loss = str2numarr(val_loss);
                             //console.log(loss);
 
@@ -617,8 +623,8 @@ var login_counter = 0 ;
                     });
                     socket.on('code',function(code){
                         $scope.$applyAsync(function(){
-                          console.log(typeof code);
-                          console.log(code);
+                          //console.log(typeof code);
+                         // console.log(code);
                           $scope.code = code ;
                         })
                     });
@@ -630,135 +636,152 @@ var login_counter = 0 ;
 
         $scope.reset = function()
         {
-            //console.log('restart-clicked');
-            $scope.Isplaydisabled = false ;
-            $scope.Ispausedisabled = true ;
-            $scope.Isstopdisabled = true ;
-            $scope.Isresetdisabled = true ;
-            $scope.hyperpara_disabled = false ;
-            $scope.Upload_btn_disable = false ;
-            $scope.Upload_btn = 'Upload' ;
-            $scope.graph_datasets.splice(0,$scope.graph_datasets.length);
-            $scope.code = null ;
-            $scope.showgraph = false ;
+            Reset() ;
+            };
+            function Reset()
+            {
+                $scope.Isplaydisabled = false ;
+                $scope.Ispausedisabled = true ;
+                $scope.Isstopdisabled = true ;
+                $scope.Isresetdisabled = true ;
+                $scope.hyperpara_disabled = false ;
+                $scope.Upload_btn_disable = false ;
+                $scope.Upload_btn = 'Upload' ;
+                $scope.graph_datasets.splice(0,$scope.graph_datasets.length);
+                $scope.code = null ;
+                $scope.showgraph = false ;
 
-        };
+            }
 
-        $scope.autogenerate = function()
+            function Login()
         {
-            // autogenerate and download the neural network code developed at the backend
-
+            console.log($cookies.getAll());
+            if($cookies.get('User'))
+            {
+                $scope.Isguest = false ;
+                $scope.username = $cookies.get('User');
+                console.log($scope.username);
+                $scope.profile = $cookies.get('Image');
+                console.log($scope.profile);
+            }
         };
 
         $scope.addexcel = function()
         {
-            $scope.progressivebar = false ;
-            $scope.headers.splice(0,$scope.headers.length);
+            $scope.$applyAsync(function()
+            {
+                $scope.progressivebar = false ;
+                $scope.headers.splice(0,$scope.headers.length);
 
-            // Import local excel files to the website
-           //// var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xlsx|.xls)$/;
-            var xlsxflag = false; /*Flag for checking whether excel is .xls format or .xlsx format*/
-            if ($("#xls_file").val().toLowerCase().indexOf(".xlsx") > 0) {
-                xlsxflag = true;
-            }
-          //  console.log("Xlsxflag",xlsxflag);
-            var reader = new FileReader();
-            reader.onload = function (e) {
-            //    console.log('action_triggered') ;
-                var data = e.target.result;
-                if (xlsxflag) {
-                    var workbook = XLSX.read(data, { type: 'binary' });
+                // Import local excel files to the website
+                //// var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xlsx|.xls)$/;
+                var xlsxflag = false; /*Flag for checking whether excel is .xls format or .xlsx format*/
+                if ($("#xls_file").val().toLowerCase().indexOf(".xlsx") > 0) {
+                    xlsxflag = true;
                 }
-                else {
-                    var workbook = XLS.read(data, { type: 'binary' });
-                }
-
-                var sheet_name_list = workbook.SheetNames;
-                //var cnt = 0;
-                sheet_name_list.forEach(function (y) { /*Iterate through all sheets*/
-
-                    /*  if (xlsxflag) {
-                     var exceljson = XLSX.utils.sheet_to_json(workbook.Sheets[y]);
-                     //console.log("Hi");
-                     console.log(exceljson) ;
-                     }
-                     else {
-                     var exceljson = XLS.utils.sheet_to_row_object_array(workbook.Sheets[y]);
-                     console.log(exceljson);
-                     } */
-
-                    var worksheet = workbook.Sheets[y];
-                    var headers = [];
-                    var row ;
-                    var data = [];
-                    for(z in worksheet)
-                    {
-                        if(z[0] === '!') continue;
-                        //parse out the column, row, and value
-                        var tt = 0;
-                        for (var i = 0; i < z.length; i++) {
-                            if (!isNaN(z[i])) {
-                                tt = i;
-                                break;
-                            }
-                        };
-                        //var col = z.substring(0,1);
-                        var col =  z.replace(/[0-9]/g, '');
-                        //row = parseInt(z.substring(1));
-                        const row = parseInt(z.replace(/\D/g,''));
-                        var value = worksheet[z].v;
-
-                        //store header names
-                        if(row == 1)
-                        {
-                            headers[col] = value;
-                            //console.log(value);
-                            //console.log(headers);
-                            $scope.headers.push(value);
-                            continue;
-                        }
-
-                        if(!data[row]) data[row]={};
-                        data[row][headers[col]] = value;
+                //  console.log("Xlsxflag",xlsxflag);
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    //    console.log('action_triggered') ;
+                    var data = e.target.result;
+                    if (xlsxflag) {
+                        var workbook = XLSX.read(data, { type: 'binary' });
                     }
-                    console.log(row) ;
+                    else {
+                        var workbook = XLS.read(data, { type: 'binary' });
+                    }
 
-                    const result = data.reduce(function(r, e) {
-                        return Object.keys(e).forEach(function(k) {
-                            if(!r[k]) r[k] = [].concat(e[k]);
-                            else r[k] = r[k].concat(e[k])
-                        }), r
-                    }, {});
-                    //JSON.stringify(result);
-                    //console.log(result);
-                    tabular_data = result ;
-                   // if(tabular_data === result)
-                    //{
+                    var sheet_name_list = workbook.SheetNames;
+                    //var cnt = 0;
+                    sheet_name_list.forEach(function (y) { /*Iterate through all sheets*/
+
+                        /*  if (xlsxflag) {
+                         var exceljson = XLSX.utils.sheet_to_json(workbook.Sheets[y]);
+                         //console.log("Hi");
+                         console.log(exceljson) ;
+                         }
+                         else {
+                         var exceljson = XLS.utils.sheet_to_row_object_array(workbook.Sheets[y]);
+                         console.log(exceljson);
+                         } */
+
+                        var worksheet = workbook.Sheets[y];
+                        var headers = [];
+                        var row ;
+                        var data = [];
+                        console.log('Converting to JSON');
+                        for(z in worksheet)
+                        {
+                            if(z[0] === '!') continue;
+                            //parse out the column, row, and value
+                            var tt = 0;
+                            for (var i = 0; i < z.length; i++) {
+                                if (!isNaN(z[i])) {
+                                    tt = i;
+                                    break;
+                                }
+                            };
+                            //var col = z.substring(0,1);
+                            var col =  z.replace(/[0-9]/g, '');
+                            //row = parseInt(z.substring(1));
+                            const row = parseInt(z.replace(/\D/g,''));
+                            var value = worksheet[z].v;
+
+                            //store header names
+                            if(row == 1)
+                            {
+                                headers[col] = value;
+                                //console.log(value);
+                                //console.log(headers);
+                                $scope.headers.push(value);
+                                continue;
+                            }
+
+                            if(!data[row]) data[row]={};
+                            data[row][headers[col]] = value;
+                        }
+                        console.log(row) ;
+
+                        const result = data.reduce(function(r, e) {
+                            return Object.keys(e).forEach(function(k) {
+                                if(!r[k]) r[k] = [].concat(e[k]);
+                                else r[k] = r[k].concat(e[k])
+                            })
+                        }, {});
+                        //JSON.stringify(result);
+                        console.log('key reduction done');
+                        //tabular_data = result ;
+                        // if(tabular_data === result)
+                        //{
                         $scope.progressivebar = true;
                         //console.log('Yeah, bitch');
                         $scope.play_tooltip = "Select Input Parameters" ;
                         $http.post('/data',
                             {
-                                body : tabular_data
+                                body : result
 
                             });
-                    $scope.Upload_btn = 'Uploaded' ;
-                    $scope.Upload_btn_disable = true ;
-                    //}
+                        console.log('File Uploaded to server');
+                        $scope.Upload_btn = 'Uploaded' ;
+                        $scope.Upload_btn_disable = true ;
+                        //}
 
-                });
+                    });
 
-            };
-            if (xlsxflag) {
-                reader.readAsArrayBuffer($("#xls_file")[0].files[0]);
-              //  console.log('File name \t:',$("#xls_file")[0].files[0].name);
+                };
+                if (xlsxflag) {
+                    reader.readAsArrayBuffer($("#xls_file")[0].files[0]);
+                    //  console.log('File name \t:',$("#xls_file")[0].files[0].name);
 
-            }
-            else {
-                reader.readAsBinaryString($("#xls_file")[0].files[0]);
-                //console.log('File name \t:',$("#xls_file")[0].files[0].name);
-            }
-            $scope.filename = $("#xls_file")[0].files[0].name ;
+                }
+                else {
+                    reader.readAsBinaryString($("#xls_file")[0].files[0]);
+                    //console.log('File name \t:',$("#xls_file")[0].files[0].name);
+                }
+                $scope.filename = $("#xls_file")[0].files[0].name ;
+
+            })
+
         };
 
       //  $scope.adddataset = function()
@@ -773,7 +796,7 @@ var login_counter = 0 ;
             };
         $scope.changelayergraphic = function()
         {
-            console.log("In CLG");
+           // console.log("In CLG");
             //console.log($scope.layer);
             var l = Number($scope.layer);
             addlayer(l,neurons_list);
@@ -799,8 +822,8 @@ var login_counter = 0 ;
             for(i=0;i<layers;++i)
             {
                 $scope.ActNeuronPara[i] = {} ;
-                $scope.ActNeuronPara[i].no_percp = 2;
-                $scope.ActNeuronPara[i].Dropout = 0.1 ;
+                $scope.ActNeuronPara[i].no_percp = neurons_list[i];
+                $scope.ActNeuronPara[i].Dropout = droputs[i] ;
             }
 
             $scope.hide = function() {
@@ -808,6 +831,7 @@ var login_counter = 0 ;
             };
 
             $scope.cancel = function() {
+                Reset();
                 $mdDialog.cancel();
             };
 
@@ -892,6 +916,7 @@ var login_counter = 0 ;
             };
 
             $scope.cancel = function() {
+
                 $mdDialog.cancel();
             };
 
@@ -911,10 +936,10 @@ var login_counter = 0 ;
                 }
 
                 //target = $scope.target ;
-                console.log(final_headers);
-                console.log(target) ;
-                play() ;
+               // console.log(final_headers);
+               // console.log(target) ;
                 $mdDialog.hide();
+                play() ;
                 //final_headers.splice(0);
             };
             $scope.isChecked = function(ip) {
@@ -939,39 +964,43 @@ var login_counter = 0 ;
                 }
             }
         }
+        });
+/*
+ $scope.logindialog = function ()
+ {
+ $mdDialog.show({
+ controller : Login_Controller,
+ templateUrl : 'UserLogin.html',
+ parent : angular.element(document.body),
+ targetEvent: ev,
+ clickOutsideToClose : true
+ })
+ };
 
-            $scope.logindialog = function ()
-            {
-                $mdDialog.show({
-                    controller : Login_Controller,
-                    templateUrl : '',
-                    parent : angular.element(document.body),
-                    clickOutsideToClose : false
-                })
-            };
+ function Login_Controller()
+ {
+ $scope.hide = function() {
+ $mdDialog.hide();
+ };
 
-         function Login_Controller()
-         {
-             $scope.hide = function() {
-                 $mdDialog.hide();
-             };
+ $scope.cancel = function() {
+ $mdDialog.cancel();
+ };
 
-             $scope.cancel = function() {
-                 $mdDialog.cancel();
-             };
+ $scope.answer = function()
+ {
+ $mdDialog.hide() ;
 
-             $scope.answer = function()
-             {
-
-             }
+ }
 
 
-         }
+ }
 
 
 
-    });
 
+
+ */
 
 
 /*
@@ -1000,5 +1029,3 @@ angular.module('webapp', ['ngMaterial']).factory('socket', function ($rootScope)
 });
 */
 
-// Google API client id : 95188641970-b5dpuie1d0kevhgecfogpjfptfank8k9.apps.googleusercontent.com
-// Google API client secret : aaPScCfl7yVlUS1aDRp6RIR0

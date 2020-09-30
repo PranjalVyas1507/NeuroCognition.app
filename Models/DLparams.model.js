@@ -18,15 +18,11 @@ var User_info = new mongoose.Schema({
                 required : true
    },
 
-    googleId : {type : String,
+    Id : {type : String,
         unique : true
     },
 
-    firstname : {type : String,
-        required : true
-    },
-
-    lastname : {type : String,
+    Name : {type : String,
         required : true
     },
 

@@ -5,6 +5,7 @@ const express = require('express');
 const exphbs = require ('express-handlebars');
 const app = express() ;
 const body_parser = require('body-parser');
+const cors = require('cors')
 const mongoose = require('mongoose');
 const spawn = require('child_process').spawn;
 const fs = require('fs');
@@ -28,7 +29,7 @@ app.use(body_parser.json({ limit : '150mb' }));
 app.use(body_parser.urlencoded({limit : '150mb' , extended : false}));
 app.use(express.json({limit : '150mb', extended : true, parameterLimit: 50000 }));
 app.use(express.urlencoded({limit : '150mb', extended : true, parameterLimit: 50000 }));
-//app.use()
+app.use(cors());
 app.engine('.hbs', exphbs({ defaultLayout : 'login', extname : '.hbs' })); app.set('view engine', '.hbs');
 
 
@@ -42,6 +43,12 @@ app.use(express.static(__dirname + '/frontend'));
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+    app.all('/*', function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        next();
+    });
+
 
 app.use('/login',require('./routes/index'));
 app.use('/auth',require('./routes/auth'));
@@ -58,6 +65,7 @@ app.use('/auth',require('./routes/auth'));
     }); */
 
 //mongoose.connect("mongodb+srv://PranjalV1507:H7NkzGYHvjQcCgq@neuralpark0.xlkya.mongodb.net/AI_params?retryWrites=true&w=majority") ;
+
 
 
 
@@ -156,7 +164,7 @@ io.on('connection', function(socket) {
 
     if(params_rcvd===true)
     {
-        console.log('spawning python')
+        console.log('spawning python');
         py  = spawn('python', ['main.py']),
             py.stdout.on('data', function(data){
                 dataString = '' + data.toString() ;
@@ -171,7 +179,7 @@ io.on('connection', function(socket) {
             // metrics = res.json(metrics);
             socket.emit('metrics', metrics);
 
-            paramstodatabase();
+            //paramstodatabase();
 
             //generated python cde
             gen_code = fs.readFileSync('DL_code.py', 'utf8');
@@ -207,6 +215,7 @@ io.on('connection', function(socket) {
 
     function paramstodatabase()
 {
+    var User_1A = new user() ;
     var NeuralNetworkmodel =
     {
         fliename : params[14],
@@ -216,7 +225,7 @@ io.on('connection', function(socket) {
 
     };
     user.NeuralNet = NeuralNetworkmodel ;
-    user.save() ;
+    User_1A.save() ;
 }
 
 
