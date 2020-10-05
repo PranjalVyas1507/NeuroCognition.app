@@ -5,7 +5,9 @@ const mongoose = require('mongoose');
 
 var NN_Schema = new mongoose.Schema({
     model_id : {type : String},
-    fliename : {type : String},
+    fliename : {
+                type : String,
+                required : true },
     ptype : {type : String},
     layers : { type : Number},
     neurons : { type :Array},
