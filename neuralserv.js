@@ -243,7 +243,15 @@ io.on('connection', function(socket) {
         fliename : params[14],
         layers : params[6] ,
         neurons : params[7],
-        ptype : params[1]
+        ptype : params[1],
+        test_split : params[3],
+        validation_split : params[14],
+        learning_rate : params[2],
+        Batch_size : params[5],
+        Optimizer : params[4],
+        droupouts : params[13],
+        framework : params[0],
+        Date : Date.now()
 
     };
     user.updateOne(
