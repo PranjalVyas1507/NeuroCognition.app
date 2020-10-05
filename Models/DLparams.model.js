@@ -9,7 +9,15 @@ var NN_Schema = new mongoose.Schema({
     ptype : {type : String},
     layers : { type : Number},
     neurons : { type :Array},
-    weights_biases : {type : Array}
+    dropouts : { type : Array },
+    weights_biases : {type : Array},
+    framework : {type : String},
+    test_split : { type : Number },
+    validation_split : { type : Number },
+    learning_rate : { type : Number },
+    Batch_size : { type : Number },
+    Optimizer :  { type : String  },
+    Date : { type : Date  }
 
 });
 
