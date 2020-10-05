@@ -21,7 +21,9 @@ require('./passport')(passport);
 
 var params = [] ;
 var params_rcvd = false ;
+var User ;
 dataString = '' ;
+var NeuralNet_history = {} ;
 
 
 //static files;
@@ -72,6 +74,8 @@ app.use('/auth',require('./routes/auth'));
 // GET request  : Neural Network parameters
 app.get('/data' , function(req,res){
     console.log("Just received a GET request");
+    User = req.user ;
+    console.log(req.user) ;
 
     var framework = req.query.framework ;
     var type = req.query.type ;
@@ -111,6 +115,7 @@ app.get('/data' , function(req,res){
     params[12] = Valid_Split ;
     params[13] = Dropout ;
     params[14] = filename ;
+    User = req.query.user ;
    // console.log('selected headers:\t' + params[10]) ;
     console.log('target:\t' + params[11]) ;
 
@@ -148,6 +153,23 @@ app.post('/data' , function(req,res){
 
 }) ;
 
+app.post('/history',function(req, res){
+    User_Name = req.body.body.user ;
+    //console.log(User_Name);
+    user.findOne({ UserName : User_Name },function(err, docs){
+        //NeuralNet_history = docs.NeuralNet;
+      //  console.log(docs);
+       // console.log(docs.NeuralNet);
+        for(i=0;i<docs.NeuralNet.length;++i)
+        {
+            NeuralNet_history['file' + (i+1)] = docs.NeuralNet[i] ;
+        }
+        console.log(NeuralNet_history);
+        res.json(NeuralNet_history) ;
+
+    })
+});
+
 
 // Starting the server
 var server = app.listen(3000,function(){
@@ -179,7 +201,7 @@ io.on('connection', function(socket) {
             // metrics = res.json(metrics);
             socket.emit('metrics', metrics);
 
-            //paramstodatabase();
+            paramstodatabase(User);
 
             //generated python cde
             gen_code = fs.readFileSync('DL_code.py', 'utf8');
@@ -213,9 +235,9 @@ io.on('connection', function(socket) {
     params[14] = filename ;
     */
 
-    function paramstodatabase()
+    function paramstodatabase(User)
 {
-    var User_1A = new user() ;
+
     var NeuralNetworkmodel =
     {
         fliename : params[14],
@@ -224,8 +246,20 @@ io.on('connection', function(socket) {
         ptype : params[1]
 
     };
-    user.NeuralNet = NeuralNetworkmodel ;
-    User_1A.save() ;
+    user.updateOne(
+        { UserName : User },
+        {$push : { NeuralNet : NeuralNetworkmodel }},
+        function(error , success){
+            if(error)
+            {
+                console.log(error) ;
+            }
+            else
+            {
+                console.log(success);
+            }
+        }
+    )
 }
 
 

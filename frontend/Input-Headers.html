@@ -20,8 +20,8 @@
                 <md-divider></md-divider>
                 <md-list-item ng-repeat="header in JSON_header" style="margin: 0px; padding: 0px">
                     <h4 style="border-color: black; width: 150px ;padding: 0px; margin-left: 50px; align-self: center">{{ header.header }}</h4>
-                    <md-checkbox class="md-primary" ng-model="header.input"  style="border-color: black; width: 50px; padding: 0px; margin-left: 50px; align-self: center"></md-checkbox>
-                    <md-checkbox class="md-primary" ng-model="header.target" ng-change="CheckboxDisable(header.target,header.header)"  style="border-color: black; width: 50px; padding: 0px; margin-left:50px"></md-checkbox>
+                    <md-checkbox class="md-primary md-raised" ng-model="header.input"  style="border-color: black; width: 50px; padding: 0px; margin-left: 50px; align-self: center"></md-checkbox>
+                    <md-checkbox class="md-primary md-raised" ng-model="header.target" ng-change="CheckboxDisable(header.target,header.header)"  style="border-color: black; width: 50px; padding: 0px; margin-left:50px"></md-checkbox>
                 </md-list-item>
             </md-list>
         </md-dialog-cotent>

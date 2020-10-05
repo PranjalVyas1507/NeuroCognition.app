@@ -1,7 +1,7 @@
 // Code goes here
 // Default Deep Neural Network
-var default_neurons = [3, 4, 5, 2] ;
-var default_layers = 4;
+var default_neurons = [3, 5, 2] ;
+var default_layers = 3;
 var tabular_data ;
 
 // Intial co-ordinates for 2D Rendering
@@ -20,9 +20,10 @@ var target ;
 var droputs = [0.1, 0.1, 0.1, 0.1];
 var socket ;
 var login_counter = 0 ;
+var toggle_nav = true ;
 
     angular.module('webapp', ['ngMaterial', 'ngCookies'])
-    .controller('AppCtrl', function($scope, $http, $mdDialog, $cookies) {
+    .controller('AppCtrl', function($scope, $http, $mdDialog, $cookies, $mdSidenav) {
 
         //List of Options for the NN Framework
         $scope.strlist_frmwrk = ['Keras', 'PyTorch'];
@@ -37,6 +38,9 @@ var login_counter = 0 ;
 
         $scope.graph_datasets = [] ;
         $scope.pred_data = [] ;
+
+        $scope.images = [] ;
+
 
         // Selected Variables from the list of functions
         $scope.optype = 'Adam' ;
@@ -71,9 +75,10 @@ var login_counter = 0 ;
         $scope.play_tooltip = 'No File has been Uploaded' ;
         $scope.stop_tooltip = ' Stop Neural Network Tuning and Reset Parameters : Currently Not Tuning any network';
         $scope.code = ' ';
-        $scope.FABOpen = true ;   $scope.Isguest = false ; $scope.showdrop = false ;
+        $scope.FABOpen = true ;   $scope.Isguest = true ; $scope.showdrop = false ;
         $scope.username= 'Guest' ;
         $scope.profile = 'user.svg';
+        $scope.NNmodels = {} ;
 
 
         var elem = document.getElementById('NN_park');
@@ -474,10 +479,11 @@ var login_counter = 0 ;
                         headers : final_headers,
                         target : target,
                         dropouts : droputs,
-                        filename : $scope.filename
+                        filename : $scope.filename,
+                        user : $scope.username
                     }
 
-                }).then(function (res){
+                  }).then(function (res){
                     //console.log(res);
                     socket = io.connect('http://localhost:3000');
                     socket.on('metrics',function(response){
@@ -633,6 +639,47 @@ var login_counter = 0 ;
 
         }
 
+        $scope.navToggle = function () {
+            $http.post('/history',{
+                body : { user : $scope.username }
+            }).then(function(res){
+                //console.log(res.data);
+                $scope.NNmodels = res.data ;
+                console.log(Object.keys($scope.NNmodels).length)
+                for(i=0;i<Object.keys($scope.NNmodels).length;++i)
+                {
+                    if($scope.NNmodels['file'+(i+1)].ptype =='Classification')
+                    {
+                        $scope.images[i] = 'binary.svg' ;
+                    }
+                    else
+                    {
+                        $scope.images[i] = 'timeseries.svg' ;
+                    }
+                    console.log($scope.images[i]);
+                }
+            });
+
+            if(toggle_nav===true)
+            {
+                document.getElementById('SideNav').style.width = "100%" ;
+                document.getElementById('Main').style.marginLeft = "27%" ;
+                toggle_nav = false ;
+                console.log(toggle_nav);
+            }
+
+            else
+            {
+                document.getElementById('SideNav').style.width = "0%";
+                document.getElementById('Main').style.marginLeft = "0%";
+                toggle_nav = true;
+                console.log(toggle_nav);
+            }
+
+
+            $mdSidenav('right').toggle() ;
+        };
+
 
         $scope.reset = function()
         {
@@ -745,12 +792,12 @@ var login_counter = 0 ;
                         const result = data.reduce(function(r, e) {
                             return Object.keys(e).forEach(function(k) {
                                 if(!r[k]) r[k] = [].concat(e[k]);
-                                else r[k] = r[k].concat(e[k])
-                            })
+                                else r[k] = r[k].concat(e[k]);
+                            }),r
                         }, {});
                         //JSON.stringify(result);
                         console.log('key reduction done');
-                        //tabular_data = result ;
+                        tabular_data = result ;
                         // if(tabular_data === result)
                         //{
                         $scope.progressivebar = true;
@@ -758,7 +805,7 @@ var login_counter = 0 ;
                         $scope.play_tooltip = "Select Input Parameters" ;
                         $http.post('/data',
                             {
-                                body : result
+                                body : tabular_data
 
                             });
                         console.log('File Uploaded to server');
@@ -794,12 +841,15 @@ var login_counter = 0 ;
             {
 
             };
+
+
         $scope.changelayergraphic = function()
         {
            // console.log("In CLG");
             //console.log($scope.layer);
             var l = Number($scope.layer);
-            addlayer(l,neurons_list);
+            var n = neurons_list ;
+            addlayer(l,n);
         };
         function str2numarr(arr)
         {
@@ -825,6 +875,8 @@ var login_counter = 0 ;
                 $scope.ActNeuronPara[i].no_percp = neurons_list[i];
                 $scope.ActNeuronPara[i].Dropout = droputs[i] ;
             }
+            //console.log(neurons_list) ;
+            //console.log($scope.ActNeuronPara) ;
 
             $scope.hide = function() {
                 $mdDialog.hide();
@@ -836,11 +888,16 @@ var login_counter = 0 ;
             };
 
             $scope.answer = function() {
+                while(neurons_list.length>0)
+                {
+                    neurons_list.pop();
+                }
                 for(i=0;i<layers;++i) {
                     neurons_list[i] = Number($scope.ActNeuronPara[i].no_percp);
                     droputs[i] = Number($scope.ActNeuronPara[i].Dropout);
                 }
                 addlayer(Number(layers),neurons_list);
+                //console.log(neurons_list);
                 //console.log(typeof layers);
                 //console.log(neurons_list);
 
@@ -881,6 +938,31 @@ var login_counter = 0 ;
             })
         };
 
+
+
+            $scope.Reloadparams = function(i)
+            {
+                //console.log('index:\t' + index);
+                $scope.layer = $scope.NNmodels['file'+(i+1)].layers ;
+                neurons_list = $scope.NNmodels['file'+(i+1)].neurons ;
+                $scope.ptype = $scope.NNmodels['file'+(i+1)].ptype ;
+                droputs = $scope.NNmodels['file'+(i+1)].dropouts ;
+                $scope.frmwrk = $scope.NNmodels['file'+(i+1)].framework ;
+                neurons_list = neurons_list.map(function(v){
+                    return +v ;
+                });
+                addlayer($scope.layer,neurons_list);
+
+            };
+        $scope.downloadreport = function()
+        {
+                // Excel Report for previous records
+        };
+
+        $scope.DeleteDoc = function($index)
+        {
+            //Delete previous documents
+        };
 
         function IP_Header_Controller($scope, $mdDialog, headers) {
 
