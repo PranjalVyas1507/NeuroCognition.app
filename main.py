@@ -42,6 +42,12 @@ loss_stats = {
 "confusion_matrix" : []
 }
 
+w_n_b = {
+ "layers" : [],
+ "weights" : [],
+ "biases" : []
+}
+
 y_transformer = RobustScaler()
 f_transformer = RobustScaler()
 
@@ -317,7 +323,7 @@ def coder(parameters):
                             py_out.write(code_string)
 
                         if(parameters[1]=='Time Series'):
-
+                                layers_1 = layers_1 - 1
                                 #code_string += ("\nfrom sklearn.preprocessing import StandardScaler\n")
                                 code_string += ("\nfrom sklearn.preprocessing import RobustScaler\n")
                                 #code_string += ("from sklearn.metrics import confusion_matrix\n")
@@ -354,10 +360,10 @@ def coder(parameters):
                                     code_string+="\n\t\th_x_"+str(i)+" = Variable(torch.zeros(1, batch," + neurons[i] + "))"
                                     code_string+="\n\t\tc_x_"+str(i)+" = Variable(torch.zeros(1, batch," + neurons[i] + "))"
                                     if(i==0):
-                                        code_string+="\n\t\tout"+str(i)+", (h_x"+str(i+1)+", c_x"+str(i+1)+") = self.IP_Layer(X.view(self.seq_length,len(X),-1), (h_x"+str(i)+",c_x"+str(i)+"))"
+                                        code_string+="\n\t\tout"+str(i)+", (h_x_"+str(i+1)+", c_x_"+str(i+1)+") = self.IP_Layer(X.view(self.seq_length,len(X),-1), (h_x_"+str(i)+",c_x_"+str(i)+"))"
                                     else:
                                         code_string+="\n\t\tself.regress"+str(i)+" = nn.LSTM(input_size="+neurons[i-1]+",hidden_size="+neurons[i]+",dropout="+dropouts[i]+")"
-                                        code_string+="\n\t\tout"+str(i)+", (h_x, c_x) = self.regress(out,(h_x, c_x))"
+                                        code_string+="\n\t\tout"+str(i)+", (h_x_"+str(i+1)+", c_x_"+str(i+1)+") = self.regress"+str(i)+"(out"+str(i)+",(h_x_"+str(i)+", c_x_"+str(i)+"))"
                                 code_string+="\n\t\tout = self.Out_Layer(out"+str(layers_1-1)+"[-1].view(batch,-1))"
 
                                 code_string+="\n\t\treturn out.view(-1)\n"
@@ -432,7 +438,6 @@ def coder(parameters):
                                 code_string +=("\n\tfor X_train_batch, y_train_batch in train_loader:")
                                 code_string +=("\n\t\tX_train_batch, y_train_batch = X_train_batch.to(device), y_train_batch.to(device)")
                                 code_string +=("\n\t\toptimizer.zero_grad()")
-                                code_string +=("\n\t\tX_train_batch = X_train_batch.permute(1,0,2)")
                                 code_string +=("\n\t\ty_train_pred = regressor_model(X_train_batch,BATCH_SIZE)")
 
                                 code_string +=("\n\t\ttrain_loss = loss_func(y_train_pred, y_train_batch.unsqueeze(1))")
@@ -445,7 +450,6 @@ def coder(parameters):
                                 code_string +=("\n\t\tregressor_model.eval()")
                                 code_string +=("\n\t\tfor X_val_batch, y_val_batch in val_loader:")
                                 code_string +=("\n\t\t\tX_val_batch, y_val_batch = X_val_batch.to(device), y_val_batch.to(device)")
-                                code_string +=("\n\t\t\tX_val_batch = X_val_batch.permute(1,0,2)")
                                 code_string +=("\n\t\t\ty_val_pred = regressor_model(X_val_batch,16)")
 
 
@@ -454,10 +458,9 @@ def coder(parameters):
                                 code_string +=("\n\tprint(train_epoch_loss/len(train_loader))")
                                 code_string +=("\n\tprint(val_epoch_loss/len(val_loader))")
 
-
+                                code_string +=("\ny_pred_list = []")
                                 code_string +=("\nfor X_test_batch, y_test_batch in test_loader:")
                                 code_string +=("\n\tX_test_batch, y_test_batch = X_test_batch.to(device), y_test_batch.to(device)")
-                                code_string +=("\n\tX_test_batch = X_test_batch.permute(1,0,2)")
                                 code_string +=("\n\ty_test_pred = regressor_model(X_test_batch,1)")
                                 code_string +=("\n\ty_pred_list.append(y_test_pred)")
                                 code_string +=("\ny_pred_inv = y_transformer.inverse_transform(pd.DataFrame(y_pred_list))")
@@ -663,6 +666,7 @@ def data_preprocessing(file, parameters):
 def tf_ann(parameters):
 
     global loss_stats
+    global w_n_b
     #print(type(parameters[10]))
     X_train, X_test, y_train, y_test = data_preprocessing('data.json', parameters)
     #print(type(X_train),type(y_train))
@@ -742,6 +746,27 @@ def tf_ann(parameters):
     cm = confusion_matrix(y_test, y_pred)
     #with open('predict.json', 'w') as fp:
         #json.dump(str(y_pred), fp)
+    try:
+        i=0
+        for layer in classifier.layers:
+            w_n_b["layers"].append(layer.name)
+            w_n_b["weights"].append(layer.get_weights()[0])
+            w_n_b["biases"].append(layer.get_weights()[1])
+            i = i + 1
+            with open('debug1.json','a') as fp:
+                json.dump(str(i),fp)
+                json.dump(str(layer.name),fp)
+                json.dump(str(layer.get_weights()[0]),fp)
+                json.dump(str(layer.get_weights()[1]),fp)
+
+
+        with open('weights.json','w') as fp :
+            json.dump(w_n_b,fp)
+
+
+    except Exception as e:
+        with open('debug.json', 'w') as fp:
+            json.dump(str(e), fp)
 
     loss_stats["loss"] = history.history['loss']
     loss_stats["val_loss"] = history.history['val_loss']
@@ -836,7 +861,14 @@ def tf_rnn(parameters):
             json.dump(str(e), fp)
         #print(parameters[5])
     try:
-
+    #    i=0
+    #    for layer in regressor.layers:
+    #        w_n_b['layers'].append(layer[i].name)
+    #        w_n_b['weights'].append(layer[i].get_weights()[0])
+    #        w_n_b['biases'].append(layer[i].get_weights()[1])
+    #        i= i + 1
+    #    with open('weights.json','w') as fp :
+    #        json.dump(w_n_b,fp)
     #print(json.dumps(str(history.history)))
         loss_stats["loss"] = history.history['loss']
         loss_stats["val_loss"] = history.history['val_loss']
