@@ -12,8 +12,10 @@
     <script src="/bower_components/angular/angular.min.js"></script>
     <script src="/bower_components/angular-animate/angular-animate.min.js"></script>
     <script src="/bower_components/angular-aria/angular-aria.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.7/xlsx.core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xls/0.7.4-a/xls.core.min.js"></script>
+  <!--  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.7.7/xlsx.core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xls/0.7.4-a/xls.core.min.js"></script> -->
+    <script src="/sheetjs-0.15.2/xlsx.mini.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.min.js" crossorigin="anonymous"></script>
 
@@ -66,13 +68,14 @@
     <div style="background-color: azure">
         <section layout="row">
             <md-sidenav id="SideNav" md-component-id="right" class="site-sidenav md-sidenav-left" md-whiteframe="4"
-                        md-disable-backdrop style="transition: 0.5s">
+                        md-disable-backdrop style="transition: 0.5s"  md-disable-close-events="true">
                 <md-toolbar>
                     <div class="md-hue-2 md-toolbar-tools" style="background-color: royalblue ">
                         <md-subheader class="md-toolbar-tools md-theme-indigo" style="background-color: royalblue; font-style: oblique;
                         color: snow"><b> Past Projects </b>  </md-subheader>
-                        <md-button class="md-fab md-warn md-mini" ng-click="navToggle()" style="background-color: dodgerblue; border-radius: 15%">
-                            <md-icon md-svg-src="stop.svg" style="height:100%; width: 100%; background-color: dodgerblue;
+                        <md-button class="md-fab md-warn md-mini" ng-click="navToggle()" style="background-color: #1976D2;
+                         border-radius: 15%;border-style: hidden; outline: none solid; box-shadow: none">
+                            <md-icon md-svg-src="stop.svg" style="height:100%; width: 100%; background-color: #1976D2;
                             color: #000000"></md-icon>
                             <md-tooltip>  Close History  </md-tooltip>
                         </md-button>
@@ -90,12 +93,20 @@
 
                                     <md-content layout="column" style="background-color: snow">
                                         <h4 style="align-content: center;  padding-bottom: 5%; margin-bottom: 0%; padding-top: 5%;
-                                margin-top: 0%; font-style: oblique">{{ NN.fliename }} </h4>
-                                        <h5 style="padding-top: 5%; margin-top: 0%;padding-bottom: 5%; align-self: center;
-                                margin-bottom: 0%"> {{ NN.ptype }} <br> </h5>
+                                margin-top: 0%; font-style: oblique"> &ensp; &ensp;  {{ NN.fliename }} </h4>
+                                        <md-content layout="row">
+                                            <h5 style="padding-top: 5%; margin-top: 0%;padding-bottom: 5%; align-self: center;
+                                margin-bottom: 0%"> <b> &ensp;Type : &ensp; {{ NN.ptype }} &ensp; </b> </h5>
+                                            <h5 style="padding-top: 5%; margin-top: 0%;padding-bottom: 5%; align-self: center;
+                                margin-bottom: 0%"> <b>Framework : &ensp; {{ NN.framework }}</b></h5>
+                                        </md-content>
+                                        <p style="padding-bottom: 5%; margin-bottom: 0%; padding-top: 5%;margin-top: 0%;
+                                        font-size: smaller">
+                                            &ensp;{{ NN.date }}  </p>
                                         <div layout="row" style="align-items: flex-end; padding-top: 0%; border-style: hidden ">
                                             <md-button class="md-fab md-mini" style="background-color: snow;
-                                             border-style: hidden; outline: snow solid; box-shadow: none" ng-click="downloadreport()">
+                                             border-style: hidden; outline: snow solid; box-shadow: none" ng-click="downloadreport($index)"
+                                                    ng-href="{{ excelURL  }}">
                                                 <md-icon md-svg-src="download.svg"> </md-icon>
                                                 <md-tooltip>  Download Report  </md-tooltip>
                                             </md-button>
@@ -105,7 +116,7 @@
                                                 <md-icon md-svg-src="open.svg"></md-icon>
                                             </md-button>
                                             <md-button class="md-fab md-mini" style="background-color: snow;
-                                             border-style: hidden; outline: snow solid; box-shadow: none" ng-click="DeleteDoc()" >
+                                             border-style: hidden; outline: snow solid; box-shadow: none" ng-click="DeleteDoc($index)" >
                                                 <md-tooltip> Delete </md-tooltip>
                                                 <md-icon md-svg-src="trash.svg"></md-icon>
                                             </md-button>
@@ -121,15 +132,6 @@
                     >
         </section>
         <md-content style="transition: margin-left .5s" id="Main">
-            <div >
-                <section>
-                    <h1 style="align-content: center; font-family: sans-serif; font-size: larger"><b>NEURO COGNITION</b></h1>
-                    <p>Neuro-Cognition.app provides a simple interface for deep learning engineers and AI practitioners
-                        to experiment with
-                        that takes in the data, and the requested parameters (Layers, batch-size, learning rate),tunes
-                        the neural network and automatically generates the code in python</p>
-                </section>
-            </div>
             <div layout="column">
                 <md-toolbar style="background-color:#ffffff" >
                     <md-content layout="column">
@@ -236,7 +238,6 @@
                 <!-- Tuning Hyperparameters -->
                 <div layout="column" layout-sm="row" layout-align="left center" layout-wrap>
                     <section style=" margin-bottom: 20px">
-                     <md-divider></md-divider>
                     <div class="nn_controls" layout="row" layout-sm="row"  layout-wrap>
                         <md-button class="md-fab md-ink-rippple scrolling play" ng-click='header_dialog($event)'  ng-disabled="Isplaydisabled" aria-label="Play"
                                    style="background: #3CC09A; height: 50px; width: 50px; margin-left: 0px; margin-right: 20px">
@@ -250,7 +251,6 @@
                             <md-icon md-svg-src="stop-button-icon.svg"></md-icon>
                         </md-button>
                     </div>
-                        <md-divider></md-divider>
                     </section>
                     <!-- Learning Rate -->
                     <section>
