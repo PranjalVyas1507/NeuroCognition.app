@@ -76,6 +76,8 @@ def coder(parameters):
     activationfunction = parameters[8]
     dropouts = parameters[13]
     try:
+        code = open('DL_code.py', 'r+')
+        code.truncate(0)
         #py_out = open("DL_code.py", "a")
         code_string = ''
         with open('DL_code.py', 'a') as py_out:

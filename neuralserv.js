@@ -1,4 +1,4 @@
-    /**
+            /**
  * Created by PRANJAL VYAS on 5/29/2020.
  */
 const express = require('express');
@@ -13,6 +13,7 @@ const socket = require('socket.io');
 const passport = require('passport');
 const session = require('express-session');
 //const dontenv = require('dotenv');
+
 
 require('./Models/db');
     const user = mongoose.model('User');
@@ -164,11 +165,36 @@ app.post('/history',function(req, res){
         {
             NeuralNet_history['file' + (i+1)] = docs.NeuralNet[i] ;
         }
-        console.log(NeuralNet_history);
+        //console.log(NeuralNet_history);
         res.json(NeuralNet_history) ;
 
     })
 });
+
+app.post('/deleterec',function(req,res){
+   console.log(req.body.file_id);
+   file_name = req.body.file ;
+   date = req.body.date ;
+   file_id = req.body.id ;
+   //file_id = String(file_id);
+   console.log(typeof file_id)
+
+   user.updateOne(
+       { UserName : User_Name },
+    { $pull : { NeuralNet : { fliename : file_name, id : file_id }  } },function(error , success){
+           if(error)
+           {
+               console.log('Error:\t' + error);
+           }
+           else
+           {
+               console.log(success);
+           }
+       }
+   )
+
+});
+
 
 
 // Starting the server
@@ -191,13 +217,18 @@ io.on('connection', function(socket) {
             py.stdout.on('data', function(data){
                 dataString = '' + data.toString() ;
             });
-        py.stdout.on('end', function(){
+        py.stdout.on('end'  , function(){
             console.log('python sent this',dataString);
 
 
             // results of the deep learning algorithm
             output = fs.readFileSync('result.json', 'utf8');
             var metrics = JSON.parse(output);
+
+            output = fs.readFileSync('weights.json','utf8');
+            var w_n_b = JSON.parse(output) ;
+            console.log(w_n_b);
+         //   console.log(metrics);
             // metrics = res.json(metrics);
             socket.emit('metrics', metrics);
 
@@ -208,7 +239,7 @@ io.on('connection', function(socket) {
             var code = JSON.parse(JSON.stringify(gen_code));
             socket.emit('code',gen_code) ;
 
-            fs.unlinkSync('DL_code.py');
+            //fs.unlinkSync('DL_code.py');
 
         });
         py.stdin.write(JSON.stringify(params));
@@ -245,13 +276,13 @@ io.on('connection', function(socket) {
         neurons : params[7],
         ptype : params[1],
         test_split : params[3],
-        validation_split : params[14],
+        validation_split : params[12],
         learning_rate : params[2],
         Batch_size : params[5],
         Optimizer : params[4],
-        droupouts : params[13],
+        dropouts : params[13],
         framework : params[0],
-        Date : Date.now()
+        date : Date.now()
 
     };
     user.updateOne(

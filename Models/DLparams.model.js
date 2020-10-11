@@ -5,21 +5,25 @@ const mongoose = require('mongoose');
 
 var NN_Schema = new mongoose.Schema({
     model_id : {type : String},
+
     fliename : {
                 type : String,
                 required : true },
     ptype : {type : String},
+
     layers : { type : Number},
     neurons : { type :Array},
     dropouts : { type : Array },
+
     weights_biases : {type : Array},
+
     framework : {type : String},
     test_split : { type : Number },
     validation_split : { type : Number },
     learning_rate : { type : Number },
     Batch_size : { type : Number },
     Optimizer :  { type : String  },
-    Date : { type : Date  }
+    date : { type : Date  }
 
 });
 

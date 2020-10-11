@@ -1,5 +1,5 @@
 // Code goes here
-// Default Deep Neural Network
+
 var default_neurons = [3, 5, 2] ;
 var default_layers = 3;
 var tabular_data ;
@@ -38,17 +38,19 @@ var toggle_nav = true ;
 
         $scope.graph_datasets = [] ;
         $scope.pred_data = [] ;
+        $scope.cm = [] ;
 
-        $scope.images = [] ;
+        $scope.images = [] ;   $scope.filename = '';
+        $scope.excelURL = '';
 
-
-        // Selected Variables from the list of functions
+            // Selected Variables from the list of functions
         $scope.optype = 'Adam' ;
         $scope.frmwrk = 'Keras' ;
         $scope.ptype = 'Classification';
         $scope.layer = default_layers ;
         //$scope.xl_file = new file();
-        $scope.filename = '';
+        $scope.chart = null ;
+
 
         $scope.Upload_btn = 'Upload' ;
         $scope.Upload_btn_disable = false ;
@@ -79,7 +81,6 @@ var toggle_nav = true ;
         $scope.username= 'Guest' ;
         $scope.profile = 'user.svg';
         $scope.NNmodels = {} ;
-
 
         var elem = document.getElementById('NN_park');
        // var elem = $("#NN-visualizer").getElementById("NeuralPark");
@@ -117,7 +118,6 @@ var toggle_nav = true ;
         addlayer(default_layers,default_neurons) ;
 
         two.update();
-
         //$cookies.put('user','name') ;
         Login();
         function addneuron(x,y,r)
@@ -166,15 +166,21 @@ var toggle_nav = true ;
                 //console.log(neurons[i]);
                 init_y = 20 ;
 
-                if(neurons[i]>22)
-                {
-                    neurons[i] = 22 ;
-                }
 
                 for(j=0;j<neurons[i];++j)
                 {
                     //console.log(neurons[i]);
-                    init_y = 20 + ((j+1)*(700/(neurons[i]+1))) ;
+                    if(neurons[i]>22)
+                    {
+                        init_y = 20 + ((j+1)*(700/(22+1))) ;
+                    }
+
+                    else
+                    {
+                        init_y = 20 + ((j+1)*(700/(neurons[i]+1))) ;
+                    }
+
+
                     addneuron(init_x,init_y,20);
 
                     abssica.push(init_x) ;
@@ -342,9 +348,9 @@ var toggle_nav = true ;
          {
              ctx = id ;
             $(document).ready(function(){
-                new Chart(ctx, {
+                $scope.chart =  new Chart(ctx, {
                     type: 'matrix',
-                    data: {
+                     data: {
                         datasets: [{
                             label: 'Confusion Matrix',
                             data: [
@@ -390,7 +396,7 @@ var toggle_nav = true ;
                         },
                         tooltips: {
                             callbacks: {
-                                title: function() { return $scope.filename;},
+                                title: function() { return null ;},
                                 label: function(item, data) {
                                     var v = data.datasets[item.datasetIndex].data[item.index];
                                     return [ v.v];
@@ -409,7 +415,7 @@ var toggle_nav = true ;
                                     display: false
                                 },
                                 afterBuildTicks: function(scale, ticks) {
-                                    return ticks.slice(1, 4);
+                                    return ticks.slice(1, 2);
                                 }
                             }],
                             yAxes: [{
@@ -423,7 +429,7 @@ var toggle_nav = true ;
                                     display: false
                                 },
                                 afterBuildTicks: function(scale, ticks) {
-                                    return ticks.slice(1, 4);
+                                    return ticks.slice(1, 2);
                                 }
                             }]
                         }
@@ -555,8 +561,8 @@ var toggle_nav = true ;
                                 $scope.graph_datasets.push(accuracy);
                                 $scope.graph_datasets.push(val_accuracy);
 
-                                var cm = response.confusion_matrix ;
-                                confusionmatrix_builder($('#Prediction-Chart'),cm)
+                                $scope.cm = response.confusion_matrix ;
+                                confusionmatrix_builder($('#Prediction-Chart'),$scope.cm)
                             }
                             else
                             {
@@ -643,9 +649,9 @@ var toggle_nav = true ;
             $http.post('/history',{
                 body : { user : $scope.username }
             }).then(function(res){
-                //console.log(res.data);
+                console.log(res.data);
                 $scope.NNmodels = res.data ;
-                console.log(Object.keys($scope.NNmodels).length)
+                //console.log(Object.keys($scope.NNmodels).length)
                 for(i=0;i<Object.keys($scope.NNmodels).length;++i)
                 {
                     if($scope.NNmodels['file'+(i+1)].ptype =='Classification')
@@ -656,7 +662,7 @@ var toggle_nav = true ;
                     {
                         $scope.images[i] = 'timeseries.svg' ;
                     }
-                    console.log($scope.images[i]);
+                   // console.log($scope.images[i]);
                 }
             });
 
@@ -665,7 +671,7 @@ var toggle_nav = true ;
                 document.getElementById('SideNav').style.width = "100%" ;
                 document.getElementById('Main').style.marginLeft = "27%" ;
                 toggle_nav = false ;
-                console.log(toggle_nav);
+               // console.log(toggle_nav);
             }
 
             else
@@ -673,7 +679,7 @@ var toggle_nav = true ;
                 document.getElementById('SideNav').style.width = "0%";
                 document.getElementById('Main').style.marginLeft = "0%";
                 toggle_nav = true;
-                console.log(toggle_nav);
+               // console.log(toggle_nav);
             }
 
 
@@ -694,7 +700,19 @@ var toggle_nav = true ;
                 $scope.hyperpara_disabled = false ;
                 $scope.Upload_btn_disable = false ;
                 $scope.Upload_btn = 'Upload' ;
+
                 $scope.graph_datasets.splice(0,$scope.graph_datasets.length);
+                $scope.pred_data.splice(0,$scope.pred_data.length);
+                $scope.cm.splice(0,$scope.cm.length)
+                //console.log($scope.cm);
+
+                /*var matrix_chart = document.getElementById('Prediction-Chart')
+                const context = matrix_chart.getContext('2d');
+                context.clearRect(0,0,matrix_chart.width,matrix_chart.height);*/
+
+                $scope.chart.data.datasets=[];
+                $scope.chart.update();
+
                 $scope.code = null ;
                 $scope.showgraph = false ;
 
@@ -731,11 +749,17 @@ var toggle_nav = true ;
                 reader.onload = function (e) {
                     //    console.log('action_triggered') ;
                     var data = e.target.result;
+                    var data_xlsx= ''
+                    data = new Uint8Array(data);
+                    for(i=0;i<data.byteLength; ++i)
+                    {
+                        data_xlsx += String.fromCharCode(data[i]);
+                    }
                     if (xlsxflag) {
-                        var workbook = XLSX.read(data, { type: 'binary' });
+                        var workbook = XLSX.read(data_xlsx, { type: 'binary' });
                     }
                     else {
-                        var workbook = XLS.read(data, { type: 'binary' });
+                        var workbook = XLSX.read(data_xlsx, { type: 'binary' });
                     }
 
                     var sheet_name_list = workbook.SheetNames;
@@ -756,7 +780,6 @@ var toggle_nav = true ;
                         var headers = [];
                         var row ;
                         var data = [];
-                        console.log('Converting to JSON');
                         for(z in worksheet)
                         {
                             if(z[0] === '!') continue;
@@ -787,7 +810,7 @@ var toggle_nav = true ;
                             if(!data[row]) data[row]={};
                             data[row][headers[col]] = value;
                         }
-                        console.log(row) ;
+                        //console.log(row) ;
 
                         const result = data.reduce(function(r, e) {
                             return Object.keys(e).forEach(function(k) {
@@ -796,7 +819,6 @@ var toggle_nav = true ;
                             }),r
                         }, {});
                         //JSON.stringify(result);
-                        console.log('key reduction done');
                         tabular_data = result ;
                         // if(tabular_data === result)
                         //{
@@ -808,7 +830,7 @@ var toggle_nav = true ;
                                 body : tabular_data
 
                             });
-                        console.log('File Uploaded to server');
+                        //console.log('File Uploaded to server');
                         $scope.Upload_btn = 'Uploaded' ;
                         $scope.Upload_btn_disable = true ;
                         //}
@@ -895,9 +917,15 @@ var toggle_nav = true ;
                 for(i=0;i<layers;++i) {
                     neurons_list[i] = Number($scope.ActNeuronPara[i].no_percp);
                     droputs[i] = Number($scope.ActNeuronPara[i].Dropout);
+                    console.log($scope.ActNeuronPara[i].no_percp);
+                    console.log(neurons_list[i])
                 }
-                addlayer(Number(layers),neurons_list);
-                //console.log(neurons_list);
+                console.log(neurons_list);
+
+                var n = neurons_list
+                console.log(neurons_list);
+                addlayer(Number(layers),n);
+                console.log(neurons_list);
                 //console.log(typeof layers);
                 //console.log(neurons_list);
 
@@ -954,14 +982,53 @@ var toggle_nav = true ;
                 addlayer($scope.layer,neurons_list);
 
             };
-        $scope.downloadreport = function()
+        $scope.downloadreport = function(index)
         {
-                // Excel Report for previous records
+         // Excel Report for previous records
+         var wb = XLSX.utils.book_new() ;
+         wb.Props = {
+             Title : $scope.NNmodels['file'+(index+1)].fliename,
+             Subject : 'Code',
+             Author : 'NeuroCognition.app' ,
+             CreatedDate : new Date(Date.now())
+         };
+
+         parameters = {
+           Framework : $scope.NNmodels['file'+(index+1)].framework,
+           Type : $scope.NNmodels['file'+(index+1)].ptype,
+           Optimizer : $scope.NNmodels['file'+(index+1)].Optimizer,
+           layers : $scope.NNmodels['file'+(index+1)].layers,
+           neurons : $scope.NNmodels['file'+(index+1)].neurons.toString(),
+           test_split : $scope.NNmodels['file'+(index+1)].test_split,
+           vald_split : $scope.NNmodels['file'+(index+1)].validation_split,
+           Batch_Size : $scope.NNmodels['file'+(index+1)].Batch_size,
+           learning_rate : $scope.NNmodels['file'+(index+1)].learning_rate
+         };
+
+
+
+         var parametersWB = XLSX.utils.json_to_sheet([parameters]) ;
+         //var aoaWB = XLSX.utils.json_to_sheet(array_of_arrays);
+         XLSX.utils.book_append_sheet(wb,parametersWB,'parameters');
+         //XLSX.utils.book_append_sheet(wb,aoaWB,'aoa');
+
+         XLSX.writeFile(wb,'Report.xlsx');
+
+
         };
 
-        $scope.DeleteDoc = function($index)
+        $scope.DeleteDoc = function(index)
         {
-            //Delete previous documents
+            console.log($scope.NNmodels['file'+(index+1)]._id);
+            $http.post('/deleterec', {
+                file : $scope.NNmodels['file'+(index+1)].fliename,
+                date : $scope.NNmodels['file'+(index+1)].date,
+                file_id : $scope.NNmodels['file'+(index+1)]._id
+
+
+            }).then(function(res){
+
+            })
         };
 
         function IP_Header_Controller($scope, $mdDialog, headers) {
