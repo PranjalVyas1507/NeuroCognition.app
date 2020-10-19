@@ -25,7 +25,7 @@ var params_rcvd = false ;
 var User ;
 dataString = '' ;
 var NeuralNet_history = {} ;
-
+var tabular_data = [] ;
 
 //static files;
 app.use(body_parser.json({ limit : '150mb' }));
@@ -89,7 +89,7 @@ app.get('/data' , function(req,res){
     var filename = req.query.filename ;
     //var tabular_data = JSON.stringify(req.body.data) ;
 
-    console.log("Framework:\t" + framework);
+/*    console.log("Framework:\t" + framework);
     console.log("Type:\t" + type) ;
     console.log("LR:\t" + LR) ;
     console.log("Train-Val Split:\t" + Valid_Split) ;
@@ -100,7 +100,7 @@ app.get('/data' , function(req,res){
     console.log("Activation:\t" + req.query.activation );
     console.log("Droputs :t" + Dropout);
     console.log("Headers:\t" + req.query.headers );
-    //console.log("Excel_data:\t", tabular_data);
+    //console.log("Excel_data:\t", tabular_data); */
 
     params[0] = framework ;
     params[1] = type ;
@@ -118,10 +118,13 @@ app.get('/data' , function(req,res){
     params[14] = filename ;
     User = req.query.user ;
    // console.log('selected headers:\t' + params[10]) ;
-    console.log('target:\t' + params[11]) ;
+    //console.log('target:\t' + params[11]) ;
 
     res.send("Received Params");
-    params_rcvd = true ;
+    if(params[9]!=null)
+    {
+        params_rcvd = true ;
+    }
     // spawing python script
     /*
     py    = spawn('python', ['main.py']),
@@ -146,12 +149,30 @@ app.get('/data' , function(req,res){
 
 // POST method response : for the data file
 app.post('/data' , function(req,res){
-    tabular_data = req.body ;
-    console.log(tabular_data);
-    params[9] = tabular_data ;
-    //console.log(typeof params[9]);
-    res.send("Received data");
-
+    //console.log(req.body);
+    tabular_data = req.body.body ;
+    console.log("Received file, converting data");
+    try
+    {
+        const result = tabular_data.reduce(function(r, e) {
+            e = new Object(e);
+            if(e!=null)
+            {
+                return Object.keys(e).forEach(function(k) {
+                    if(!r[k]) r[k] = [].concat(e[k]);
+                    else r[k] = r[k].concat(e[k]);
+                }),r
+            }
+        }, {})  ;
+        console.log(result);
+        params[9] = result ;
+        //console.log(typeof params[9]);
+        res.send("Received data");
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
 }) ;
 
 app.post('/history',function(req, res){
