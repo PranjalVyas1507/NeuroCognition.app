@@ -710,8 +710,7 @@ var toggle_nav = true ;
                 const context = matrix_chart.getContext('2d');
                 context.clearRect(0,0,matrix_chart.width,matrix_chart.height);*/
 
-                $scope.chart.data.datasets=[];
-                $scope.chart.update();
+                $scope.chart.clear();
 
                 $scope.code = null ;
                 $scope.showgraph = false ;
@@ -749,19 +748,21 @@ var toggle_nav = true ;
                 reader.onload = function (e) {
                     //    console.log('action_triggered') ;
                     var data = e.target.result;
+                    console.log('read data')
                     var data_xlsx= ''
                     data = new Uint8Array(data);
                     for(i=0;i<data.byteLength; ++i)
                     {
                         data_xlsx += String.fromCharCode(data[i]);
                     }
+                    console.log('converted to data, Now converting to excel');
                     if (xlsxflag) {
                         var workbook = XLSX.read(data_xlsx, { type: 'binary' });
                     }
                     else {
                         var workbook = XLSX.read(data_xlsx, { type: 'binary' });
                     }
-
+                    console.log("Adding worksheet")
                     var sheet_name_list = workbook.SheetNames;
                     //var cnt = 0;
                     sheet_name_list.forEach(function (y) { /*Iterate through all sheets*/
@@ -791,18 +792,13 @@ var toggle_nav = true ;
                                     break;
                                 }
                             };
-                            //var col = z.substring(0,1);
                             var col =  z.replace(/[0-9]/g, '');
-                            //row = parseInt(z.substring(1));
                             const row = parseInt(z.replace(/\D/g,''));
                             var value = worksheet[z].v;
 
-                            //store header names
                             if(row == 1)
                             {
                                 headers[col] = value;
-                                //console.log(value);
-                                //console.log(headers);
                                 $scope.headers.push(value);
                                 continue;
                             }
@@ -810,42 +806,33 @@ var toggle_nav = true ;
                             if(!data[row]) data[row]={};
                             data[row][headers[col]] = value;
                         }
-                        //console.log(row) ;
-
-                        const result = data.reduce(function(r, e) {
+                       /* const result = data.reduce(function(r, e) {
                             return Object.keys(e).forEach(function(k) {
                                 if(!r[k]) r[k] = [].concat(e[k]);
                                 else r[k] = r[k].concat(e[k]);
                             }),r
-                        }, {});
-                        //JSON.stringify(result);
-                        tabular_data = result ;
-                        // if(tabular_data === result)
-                        //{
+                        }, {})  ; */
+                       //tabular_data = data ;
                         $scope.progressivebar = true;
                         //console.log('Yeah, bitch');
                         $scope.play_tooltip = "Select Input Parameters" ;
                         $http.post('/data',
                             {
-                                body : tabular_data
+                                body : data
 
                             });
-                        //console.log('File Uploaded to server');
                         $scope.Upload_btn = 'Uploaded' ;
                         $scope.Upload_btn_disable = true ;
-                        //}
 
                     });
 
                 };
                 if (xlsxflag) {
                     reader.readAsArrayBuffer($("#xls_file")[0].files[0]);
-                    //  console.log('File name \t:',$("#xls_file")[0].files[0].name);
 
                 }
                 else {
                     reader.readAsBinaryString($("#xls_file")[0].files[0]);
-                    //console.log('File name \t:',$("#xls_file")[0].files[0].name);
                 }
                 $scope.filename = $("#xls_file")[0].files[0].name ;
 
