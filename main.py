@@ -541,6 +541,12 @@ def data_preprocessing(file, parameters):
     try:
         input_frame = pd.read_json(file)
         target = parameters[11]
+
+        if(type(parameters[10])=='str'):
+            temp = parameters[10]
+            parameters[10] = list()
+            parameters[10].append(temp)
+
     except Exception as e:
         with open('debug1.json', 'w') as fp:
             json.dump(str(e), fp)
@@ -663,7 +669,7 @@ def data_preprocessing(file, parameters):
 
         except Exception as e:
             with open('debug1.json', 'w') as fp:
-                json.dump(str(X.columns), fp)
+                json.dump(str(e), fp)
 
 def tf_ann(parameters):
 
@@ -751,21 +757,13 @@ def tf_ann(parameters):
     try:
         i=0
         for layer in classifier.layers:
-            w_n_b["layers"].append(layer.name)
-            w_n_b["weights"].append(layer.get_weights()[0])
-            w_n_b["biases"].append(layer.get_weights()[1])
-            i = i + 1
-            with open('debug1.json','a') as fp:
-                json.dump(str(i),fp)
-                json.dump(str(layer.name),fp)
-                json.dump(str(layer.get_weights()[0]),fp)
-                json.dump(str(layer.get_weights()[1]),fp)
-
-
+            w_n_b['layers'].append(layer[i].name)
+            if(layer.name.find("dropout")==-1):
+                w_n_b['weights'].append(layer[i].get_weights()[0])
+                w_n_b['biases'].append(layer[i].get_weights()[1])
+            i= i + 1
         with open('weights.json','w') as fp :
             json.dump(w_n_b,fp)
-
-
     except Exception as e:
         with open('debug.json', 'w') as fp:
             json.dump(str(e), fp)
@@ -863,14 +861,15 @@ def tf_rnn(parameters):
             json.dump(str(e), fp)
         #print(parameters[5])
     try:
-    #    i=0
-    #    for layer in regressor.layers:
-    #        w_n_b['layers'].append(layer[i].name)
-    #        w_n_b['weights'].append(layer[i].get_weights()[0])
-    #        w_n_b['biases'].append(layer[i].get_weights()[1])
-    #        i= i + 1
-    #    with open('weights.json','w') as fp :
-    #        json.dump(w_n_b,fp)
+        i=0
+        for layer in regressor.layers:
+            w_n_b['layers'].append(layer[i].name)
+            if(layer.name.find("dropout")==-1):
+                w_n_b['weights'].append(layer[i].get_weights()[0])
+                w_n_b['biases'].append(layer[i].get_weights()[1])
+            i= i + 1
+        with open('weights.json','w') as fp :
+            json.dump(w_n_b,fp)
     #print(json.dumps(str(history.history)))
         loss_stats["loss"] = history.history['loss']
         loss_stats["val_loss"] = history.history['val_loss']
@@ -893,6 +892,12 @@ def pyt_preprocessing(file, parameters):
     try:
         input_frame = pd.read_json(file)
         target = parameters[11]
+
+        if(type(parameters[10])=='str'):
+            temp = parameters[10]
+            parameters[10] = list()
+            parameters[10].append(temp)
+
 
         X = input_frame.drop(target, axis = 1)
         y = input_frame[target]
@@ -978,63 +983,69 @@ def pyt_ANN(parameters):
     EPOCHS = 100
     BATCH_SIZE = int(parameters[5])
 
-    train_dataset = Dataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).float())
-    val_dataset = Dataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).float())
-    test_dataset = Dataset(torch.from_numpy(X_test).float(), torch.from_numpy(y_test).float())
-
-    train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = DataLoader(dataset=val_dataset, batch_size=BATCH_SIZE)
-    test_loader = DataLoader(dataset=test_dataset, batch_size=1)
-
-    #try :
-    layers = []
-    layers.append(nn.Linear(X_train.shape[1],int(neurons[0]),bias=True))
-    #layers.append(nn.ReLU())
-    for i in range(layers_1):
-        #if(i == 0):
-        if(i == layers_1-1):
-            layers.append(nn.Linear(int(neurons[i]),1,bias=True))
-            layers.append(nn.Sigmoid())
-        else:
-            layers.append(nn.Linear(int(neurons[i]),int(neurons[i+1]),bias=True))
-            #layers.append(nn.ReLU())
-            layers.append(nn.Dropout(float(dropouts[i])))
-    model = nn.Sequential(*layers)
-
-    layers.clear()
-
-
-    #except Exception as e:
-
-
-    #NUM_FEATURES = len(X.columns)
-    #try:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    loss_func = nn.BCELoss()
-    #loss_func = nn.BCEWithLogitsLoss()
-        #loss_func = nn.MSELoss()
-        #learning_rate = 0.0015
-
-    if(parameters[4]== 'SGD'):
-        optimizer = torch.optim.SGD(model.parameters(), lr=alpha, weight_decay=0.00008)
-
-    elif(parameters[4]== 'Adam'):
-        optimizer = torch.optim.Adam(model.parameters(), lr=alpha, weight_decay=0.00008)
-
-    elif(parameters[4]== 'RMSProp'):
-        optimizer = torch.optim.RMSprop(model.parameters(), lr=alpha, weight_decay=0.00008)
-
-    elif(parameters[4]== 'Adagrad'):
-        optimizer = torch.optim.Adagrad(model.parameters(), lr=alpha, weight_decay=0.00008)
-
-    elif(parameters[4]== 'Adamax'):
-        optimizer = torch.optim.Adamax(model.parameters(), lr=alpha, weight_decay=0.00008)
-
-
-    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    y_pred = []
-    y_actual = []
     try:
+        X_train = X_train.astype(np.float32)
+        y_train = y_train.astype(np.float32)
+        X_val = X_val.astype(np.float32)
+        y_val = y_val.astype(np.float32)
+        X_test = X_test.astype(np.float32)
+        y_test = y_test.astype(np.float32)
+        train_dataset = Dataset(torch.from_numpy(X_train).float(), torch.from_numpy(y_train).float())
+        val_dataset = Dataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).float())
+        test_dataset = Dataset(torch.from_numpy(X_test).float(), torch.from_numpy(y_test).float())
+
+        train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+        val_loader = DataLoader(dataset=val_dataset, batch_size=BATCH_SIZE)
+        test_loader = DataLoader(dataset=test_dataset, batch_size=1)
+
+        #try :
+        layers = []
+        layers.append(nn.Linear(X_train.shape[1],int(neurons[0]),bias=True))
+        #layers.append(nn.ReLU())
+        for i in range(layers_1):
+            #if(i == 0):
+            if(i == layers_1-1):
+                layers.append(nn.Linear(int(neurons[i]),1,bias=True))
+                layers.append(nn.Sigmoid())
+            else:
+                layers.append(nn.Linear(int(neurons[i]),int(neurons[i+1]),bias=True))
+                #layers.append(nn.ReLU())
+                layers.append(nn.Dropout(float(dropouts[i])))
+        model = nn.Sequential(*layers)
+
+        layers.clear()
+
+
+        #except Exception as e:
+
+
+        #NUM_FEATURES = len(X.columns)
+        #try:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        loss_func = nn.BCELoss()
+        #loss_func = nn.BCEWithLogitsLoss()
+            #loss_func = nn.MSELoss()
+            #learning_rate = 0.0015
+
+        if(parameters[4]== 'SGD'):
+            optimizer = torch.optim.SGD(model.parameters(), lr=alpha, weight_decay=0.00008)
+
+        elif(parameters[4]== 'Adam'):
+            optimizer = torch.optim.Adam(model.parameters(), lr=alpha, weight_decay=0.00008)
+
+        elif(parameters[4]== 'RMSProp'):
+            optimizer = torch.optim.RMSprop(model.parameters(), lr=alpha, weight_decay=0.00008)
+
+        elif(parameters[4]== 'Adagrad'):
+            optimizer = torch.optim.Adagrad(model.parameters(), lr=alpha, weight_decay=0.00008)
+
+        elif(parameters[4]== 'Adamax'):
+            optimizer = torch.optim.Adamax(model.parameters(), lr=alpha, weight_decay=0.00008)
+
+
+        #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        y_pred = []
+        y_actual = []
         for e in range(EPOCHS):
             train_epoch_loss = 0
             val_epoch_loss = 0
@@ -1106,7 +1117,7 @@ def pyt_ANN(parameters):
 
 
     except Exception as e:
-        with open('debug.json', 'w') as fp:
+        with open('debug1.json', 'w') as fp:
             json.dump(str(e), fp)
 
     with open('result.json', 'w') as fp:
@@ -1115,6 +1126,11 @@ def pyt_ANN(parameters):
 def pyt_RNN(parameters):
     input_frame = pd.read_json('data.json')
     target = parameters[11]
+    if(type(parameters[10])=='str'):
+        temp = parameters[10]
+        parameters[10] = list()
+        parameters[10].append(temp)
+
     X = input_frame
     y = input_frame[target]
     alpha = float(parameters[2]) # alpha : learning_rate
@@ -1134,10 +1150,14 @@ def pyt_RNN(parameters):
 
     #print(input_frame.head())
     #print(X,y)
-    inx = list(X.columns)
+    with open('debug2.json', 'a') as fp:
+        json.dump(str(X.columns), fp)
+
+        inx = list(X.columns)
     #print(type(parameters[10]))
     #print(inx)
-    column_list = parameters[10]
+        column_list = parameters[10]
+        json.dump(str(column_list), fp)
     #print(column_list)
     drop = True
     #print(column_list)
@@ -1152,8 +1172,11 @@ def pyt_RNN(parameters):
             #print(input_frame.head())
             #print(type(column1))
         drop = True
+    #X = X.filter(column_list, axis=1)
     #with open('debug.json', 'w') as fp:
         #json.dump(str(drop), fp)
+    with open('debug2.json', 'a') as fp:
+        json.dump(str(X.columns), fp)
 
     test_size = int(len(X) * float(parameters[3]))
     train_size = len(X) - test_size
@@ -1326,7 +1349,7 @@ def main():
     #recieving data from the nodejs server and storing it in a JSON file
     lines = read_in()
     dict = lines[9]
-    data = json.dumps(dict['body'])
+    data = json.dumps(dict)
     f = open("data.json","w")
     f.write(data)
     f.close()
