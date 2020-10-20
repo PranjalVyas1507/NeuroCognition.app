@@ -757,10 +757,10 @@ def tf_ann(parameters):
     try:
         i=0
         for layer in classifier.layers:
-            w_n_b['layers'].append(layer[i].name)
+            w_n_b['layers'].append(layer.name)
             if(layer.name.find("dropout")==-1):
-                w_n_b['weights'].append(layer[i].get_weights()[0])
-                w_n_b['biases'].append(layer[i].get_weights()[1])
+                w_n_b['weights'].append(layer.get_weights()[0].tolist())
+                w_n_b['biases'].append(layer.get_weights()[1].tolist())
             i= i + 1
         with open('weights.json','w') as fp :
             json.dump(w_n_b,fp)
@@ -863,10 +863,10 @@ def tf_rnn(parameters):
     try:
         i=0
         for layer in regressor.layers:
-            w_n_b['layers'].append(layer[i].name)
+            w_n_b['layers'].append(layer.name)
             if(layer.name.find("dropout")==-1):
-                w_n_b['weights'].append(layer[i].get_weights()[0])
-                w_n_b['biases'].append(layer[i].get_weights()[1])
+                w_n_b['weights'].append(layer.get_weights()[0].tolist())
+                w_n_b['biases'].append(layer.get_weights()[1].tolist())
             i= i + 1
         with open('weights.json','w') as fp :
             json.dump(w_n_b,fp)
