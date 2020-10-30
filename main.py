@@ -45,7 +45,9 @@ loss_stats = {
 w_n_b = {
  "layers" : [],
  "weights" : [],
- "biases" : []
+ "biases" : [],
+ "U" : [],
+ "biases_hh" : []
 }
 
 y_transformer = RobustScaler()
@@ -194,6 +196,7 @@ def coder(parameters):
                         code_string += "\nimport torch\nimport torch.nn as nn\nimport torch.optim as optim\nfrom torch.utils.data import Dataset, DataLoader\nfrom torch.autograd import Variable\n"
 
                         if(parameters[1]=='Classification'):
+                            layers_1 = layers_1 - 1
                             code_string += ("\nclass Dataset(Dataset):")
 
                             code_string += ("\n\tdef __init__(self, X_data, y_data):")
@@ -365,7 +368,7 @@ def coder(parameters):
                                         code_string+="\n\t\tout"+str(i)+", (h_x_"+str(i+1)+", c_x_"+str(i+1)+") = self.IP_Layer(X.view(self.seq_length,len(X),-1), (h_x_"+str(i)+",c_x_"+str(i)+"))"
                                     else:
                                         code_string+="\n\t\tself.regress"+str(i)+" = nn.LSTM(input_size="+neurons[i-1]+",hidden_size="+neurons[i]+",dropout="+dropouts[i]+")"
-                                        code_string+="\n\t\tout"+str(i)+", (h_x_"+str(i+1)+", c_x_"+str(i+1)+") = self.regress"+str(i)+"(out"+str(i)+",(h_x_"+str(i)+", c_x_"+str(i)+"))"
+                                        code_string+="\n\t\tout"+str(i)+", (h_x_"+str(i+1)+", c_x_"+str(i+1)+") = self.regress"+str(i)+"(out"+str(i-1)+",(h_x_"+str(i)+", c_x_"+str(i)+"))"
                                 code_string+="\n\t\tout = self.Out_Layer(out"+str(layers_1-1)+"[-1].view(batch,-1))"
 
                                 code_string+="\n\t\treturn out.view(-1)\n"
@@ -542,7 +545,7 @@ def data_preprocessing(file, parameters):
         input_frame = pd.read_json(file)
         target = parameters[11]
 
-        if(type(parameters[10])=='str'):
+        if(type(parameters[10])==str):
             temp = parameters[10]
             parameters[10] = list()
             parameters[10].append(temp)
@@ -759,8 +762,8 @@ def tf_ann(parameters):
         for layer in classifier.layers:
             w_n_b['layers'].append(layer.name)
             if(layer.name.find("dropout")==-1):
-                w_n_b['weights'].append(layer.get_weights()[0].tolist())
-                w_n_b['biases'].append(layer.get_weights()[1].tolist())
+                w_n_b['weights'].append((layer.get_weights()[0].transpose()).tolist())
+                w_n_b['biases'].append((layer.get_weights()[1].transpose()).tolist())
             i= i + 1
         with open('weights.json','w') as fp :
             json.dump(w_n_b,fp)
@@ -864,9 +867,14 @@ def tf_rnn(parameters):
         i=0
         for layer in regressor.layers:
             w_n_b['layers'].append(layer.name)
-            if(layer.name.find("dropout")==-1):
-                w_n_b['weights'].append(layer.get_weights()[0].tolist())
-                w_n_b['biases'].append(layer.get_weights()[1].tolist())
+            if(layer.name.find("droput")==-1):
+                if(layer.name.find("lstm")!=-1):
+                    w_n_b['weights'].append((layer.get_weights()[0].transpose()).tolist())
+                    w_n_b['biases'].append((layer.get_weights()[2].transpose()).tolist())
+                    w_n_b['U'].append((layer.get_weights()[1].transpose()).tolist())
+                if(layer.name.find("dense")!=-1):
+                    w_n_b['weights'].append((layer.get_weights()[0].transpose()).tolist())
+                    w_n_b['biases'].append((layer.get_weights()[1].transpose()).tolist())
             i= i + 1
         with open('weights.json','w') as fp :
             json.dump(w_n_b,fp)
@@ -893,7 +901,7 @@ def pyt_preprocessing(file, parameters):
         input_frame = pd.read_json(file)
         target = parameters[11]
 
-        if(type(parameters[10])=='str'):
+        if(type(parameters[10])==str):
             temp = parameters[10]
             parameters[10] = list()
             parameters[10].append(temp)
@@ -965,7 +973,7 @@ def pyt_ANN(parameters):
     alpha = float(parameters[2])
     #print(alpha)
 
-    layers_1 = int(parameters[6]) + 1
+    layers_1 = int(parameters[6])
     #print(layers)
 
     neurons = parameters[7]
@@ -977,6 +985,7 @@ def pyt_ANN(parameters):
     dropouts = parameters[13]
 
     global loss_stats
+    global w_n_b
 
     X_train , y_train , X_val, y_val, X_test, y_test = pyt_preprocessing('data.json', parameters)
 
@@ -1115,7 +1124,17 @@ def pyt_ANN(parameters):
 
         loss_stats["confusion_matrix"] = np.array(pd.DataFrame(cm)).tolist()
 
+        model_wnb = model.state_dict()
+        for i in range(len(model)):
+            w_n_b['layers'].append(str(model[i]))
+            if(str(model[i]).find("Linear")!=-1):
+                str1 = str(i) + ".weight"
+                w_n_b['weights'].append(model_wnb[str1].tolist())
+                str1 = str(i) + ".bias"
+                w_n_b['biases'].append(model_wnb[str1].tolist())
 
+        with open('weights.json','w') as fp :
+            json.dump(w_n_b,fp)
     except Exception as e:
         with open('debug1.json', 'w') as fp:
             json.dump(str(e), fp)
@@ -1126,7 +1145,7 @@ def pyt_ANN(parameters):
 def pyt_RNN(parameters):
     input_frame = pd.read_json('data.json')
     target = parameters[11]
-    if(type(parameters[10])=='str'):
+    if(type(parameters[10])==str):
         temp = parameters[10]
         parameters[10] = list()
         parameters[10].append(temp)
@@ -1151,6 +1170,7 @@ def pyt_RNN(parameters):
     #print(input_frame.head())
     #print(X,y)
     with open('debug2.json', 'a') as fp:
+        json.dump(str(type(parameters[10])),fp)
         json.dump(str(X.columns), fp)
 
         inx = list(X.columns)
@@ -1330,6 +1350,27 @@ def pyt_RNN(parameters):
             #y_test_list.append(y_test_batch)
         loss_stats["y_pred_inv"] = y_transformer.inverse_transform(pd.DataFrame(y_pred_list)).tolist()
         #loss_stats["y_test_inv"] = y_transformer.inverse_transform(y_test_inv.reshape(1,-1)).tolist()
+
+
+        model_wnb = regressor_model.state_dict()
+        for key in regressor_model.state_dict():
+            if(str(key).find("weight_ih")!=-1):
+                w_n_b['weights'].append(model_wnb[key].tolist())
+            elif(str(key).find("weight_hh")!=-1):
+                w_n_b['U'].append(model_wnb[key].tolist())
+            elif(str(key).find("weight")!=-1):
+                w_n_b['weights'].append(model_wnb[key].tolist())
+            if(str(key).find("bias_ih")!=-1):
+                w_n_b['biases'].append(model_wnb[key].tolist())
+            elif(str(key).find("bias_hh")!=-1):
+                w_n_b['biases_hh'].append(model_wnb[key].tolist())
+            elif(str(key).find("bias")!=-1):
+                w_n_b['biases'].append(model_wnb[key].tolist())
+        for name , layer in regressor_model.named_children():
+            w_n_b['layers'].append(str(layer))
+
+        with open('weights.json','w') as fp :
+            json.dump(w_n_b,fp)
 
     except Exception as e:
         with open('debug1.json', 'w') as fp:
