@@ -89,7 +89,7 @@ app.get('/data' , function(req,res){
     var filename = req.query.filename ;
     //var tabular_data = JSON.stringify(req.body.data) ;
 
-/*    console.log("Framework:\t" + framework);
+   /* console.log("Framework:\t" + framework);
     console.log("Type:\t" + type) ;
     console.log("LR:\t" + LR) ;
     console.log("Train-Val Split:\t" + Valid_Split) ;
@@ -249,11 +249,14 @@ io.on('connection', function(socket) {
             output = fs.readFileSync('weights.json','utf8');
             var w_n_b = JSON.parse(output) ;
             console.log(w_n_b);
+
+
+           // socket.emit('weights',w_n_b);
+
          //   console.log(metrics);
             // metrics = res.json(metrics);
             socket.emit('metrics', metrics);
-
-            paramstodatabase(User);
+            paramstodatabase(User,w_n_b);
 
             //generated python cde
             gen_code = fs.readFileSync('DL_code.py', 'utf8');
@@ -287,7 +290,7 @@ io.on('connection', function(socket) {
     params[14] = filename ;
     */
 
-    function paramstodatabase(User)
+    function paramstodatabase(User, weights)
 {
 
     var NeuralNetworkmodel =
@@ -303,8 +306,12 @@ io.on('connection', function(socket) {
         Optimizer : params[4],
         dropouts : params[13],
         framework : params[0],
-        date : Date.now()
-
+        date : Date.now(),
+        layers_name : weights.layers,
+        weights : weights.weights,
+        biases : weights.biases,
+        hidden_weights : weights.U,
+        hidden_biases : weights.biases_hh
     };
     user.updateOne(
         { UserName : User },
