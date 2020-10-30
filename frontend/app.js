@@ -979,26 +979,156 @@ var toggle_nav = true ;
              Author : 'NeuroCognition.app' ,
              CreatedDate : new Date(Date.now())
          };
+            const merged_cells = [ { s:{r:0,c:0},e:{r:0,c:10} }]
+
+
+         Filename = {
+            filename :  $scope.NNmodels['file'+(index+1)].fliename
+        };
 
          parameters = {
-           Framework : $scope.NNmodels['file'+(index+1)].framework,
-           Type : $scope.NNmodels['file'+(index+1)].ptype,
            Optimizer : $scope.NNmodels['file'+(index+1)].Optimizer,
            layers : $scope.NNmodels['file'+(index+1)].layers,
            neurons : $scope.NNmodels['file'+(index+1)].neurons.toString(),
            test_split : $scope.NNmodels['file'+(index+1)].test_split,
            vald_split : $scope.NNmodels['file'+(index+1)].validation_split,
            Batch_Size : $scope.NNmodels['file'+(index+1)].Batch_size,
+           EPOCH : 100,
            learning_rate : $scope.NNmodels['file'+(index+1)].learning_rate
          };
 
+         data = {
+             date : $scope.NNmodels['file'+(index+1)].date,
+             Framework : $scope.NNmodels['file'+(index+1)].framework,
+             Type : $scope.NNmodels['file'+(index+1)].ptype
+
+         };
+
+         layersname =  $scope.NNmodels['file'+(index+1)].layers_name ;
 
 
-         var parametersWB = XLSX.utils.json_to_sheet([parameters]) ;
+
+         var parametersWB = XLSX.utils.json_to_sheet([Filename]) ;
+         parametersWB["!merges"] = merged_cells ;
+         XLSX.utils.sheet_add_json(parametersWB,[data],{origin : "A4"});
+            XLSX.utils.sheet_add_json(parametersWB,[parameters],{origin : "A7"});
+
+            var counter = 0;
+            var lname_char = "A", lname_num = 10, lname_pos = lname_char + lname_num ;
+            var n_char = "B", n_num=12, n_pos = n_char + n_num ;
+            var w_char = "B", w_num = 13, w_pos = w_char + w_num ;
+            var b_char = "B", b_num = 13, b_pos = b_char + b_num ;
+
+
+            w = $scope.NNmodels['file'+(index+1)].weights ;
+            // console.log(w[counter]);
+            b = $scope.NNmodels['file'+(index+1)].biases ;
+
+           /* XLSX.utils.sheet_add_aoa(parametersWB,[
+                "SheetJS".split(""),
+           /     [1,2,3,4,5,6,7],
+                [2,3,4,5,6,7,8],
+            ],{origin : "Z1"});*/
+
+            for(i=0;i<layersname.length;++i)
+            {
+
+                //console.log(layersname[i]);
+                if((layersname[i].includes("dense")===true) || (layersname[i].includes("Linear")===true) )
+                {
+                    console.log(lname_pos);
+                    console.log(n_pos);
+                    console.log(w_pos);
+                    console.log(b_pos);
+
+                    XLSX.utils.sheet_add_aoa(parametersWB,[[layersname[i]]],{origin : lname_pos}) ;
+                    //neuron_array =
+                    console.log("layer :\t"+layersname[i]);
+                    //console.log(parameters.neurons,typeof parameters.neurons);
+                    no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(1);
+                    console.log("no_of neuron\t:"+ no_neurons);
+                    XLSX.utils.sheet_add_aoa(parametersWB,[no_neurons],{origin : n_pos});
+                    XLSX.utils.sheet_add_aoa(parametersWB,w[counter],{origin : w_pos});
+
+                    b_num = parseInt(w_num) + parseInt(w[counter].length) + 2 ;
+
+                    console.log("b_num\t"+b_num);
+                    console.log("w_num\t"+w_num);
+                    console.log("wlength \t:"+w[counter].length);
+
+                    b_pos = b_char + b_num ;
+                   // o = str1 + str2 ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[b[counter]],{origin : b_pos});
+
+                    console.log("blength \t:"+b[counter].length);
+                    lname_num = parseInt(b_num) +  5 ; //let b.length =1
+                    n_num = parseInt(lname_num) +  2;
+                    lname_pos = lname_char + lname_num ;
+
+                    console.log("n_num\t:"+n_num)
+
+                    n_pos = n_char + n_num ;
+                    w_num = parseInt(n_num) + 3 ;
+                    w_pos = w_char + w_num ;
+                    counter++ ;
+                }
+
+                else if((layersname[i].includes("lstm")===true) || (layersname[i].includes("LSTM")===true) )
+                {
+                    weight_type = ["i","f","c","o"] ;
+                    wh = $scope.NNmodels['file'+(index+1)].hidden_weights ;
+                    // console.log(w[counter]);
+                    if(data.Framework==="PyTorch")
+                    {
+                        bh = $scope.NNmodels['file'+(index+1)].hidden_biases ;
+                    }
+                    console.log(lname_pos);
+                    console.log(n_pos);
+                    console.log(w_pos);
+                    console.log(b_pos);
+
+                    XLSX.utils.sheet_add_aoa(parametersWB,[[layersname[i]]],{origin : lname_pos}) ;
+
+                    no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(1);
+                    console.log("no_of neuron\t:"+ no_neurons);
+
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wi"]],{origin : "B" + lname_num}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,w[counter],{origin : w_pos});
+
+
+
+                    b_num = parseInt(w_num) + parseInt(w[counter].length) + 2 ;
+
+                    console.log("b_num\t"+b_num);
+                    console.log("w_num\t"+w_num);
+                    console.log("wlength \t:"+w[counter].length);
+
+                    b_pos = b_char + b_num ;
+                    console.log("blength \t:"+b[counter].length);
+                    XLSX.utils.sheet_add_aoa(parametersWB,[b[counter]],{origin : b_pos});
+
+                    lname_num = parseInt(b_num) +  5 ; //let b.length =1
+                    n_num = parseInt(lname_num) +  2;
+                    lname_pos = lname_char + lname_num ;
+
+                    console.log("n_num\t:"+n_num)
+
+                    n_pos = n_char + n_num ;
+                    w_num = parseInt(n_num) + 3 ;
+                    w_pos = w_char + w_num ;
+                    counter++ ;
+
+                }
+            }
+
+       //  aoa1 = ["1"];
+       //  aoa2 = ["A",'B','C',];
+
+
+      //   XLSX.utils.sheet_add_aoa(parametersWB,[aoa1,aoa2]);
          //var aoaWB = XLSX.utils.json_to_sheet(array_of_arrays);
-         XLSX.utils.book_append_sheet(wb,parametersWB,'parameters');
+         XLSX.utils.book_append_sheet(wb,parametersWB,"parameters");
          //XLSX.utils.book_append_sheet(wb,aoaWB,'aoa');
-
          XLSX.writeFile(wb,'Report.xlsx');
 
 
