@@ -12,10 +12,14 @@ var NN_Schema = new mongoose.Schema({
     ptype : {type : String},
 
     layers : { type : Number},
+    layers_name : { type : Array},
     neurons : { type :Array},
     dropouts : { type : Array },
 
-    weights_biases : {type : Array},
+    weights : {type : Array},
+    biases : { type : Array },
+    hidden_weights : { type : Array },
+    hidden_biases : { type : Array },
 
     framework : {type : String},
     test_split : { type : Number },
