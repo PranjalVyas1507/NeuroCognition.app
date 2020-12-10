@@ -237,8 +237,8 @@
             <div class="wrapper" layout="row">
                 <!-- Tuning Hyperparameters -->
                 <div layout="column" layout-sm="row" layout-align="left center" layout-wrap>
-                    <section style=" margin-bottom: 20px">
-                    <div class="nn_controls" layout="row" layout-sm="row"  layout-wrap>
+                    <section style=" margin-bottom: 20px; margin-left: 0%; padding-left: 0%; border: none">
+                    <div class="nn_controls" layout="row" layout-sm="row"  layout-wrap style="margin: 0%; padding: 0%" layout-align="left center">
                         <md-button class="md-fab md-ink-rippple scrolling play" ng-click='header_dialog($event)'  ng-disabled="Isplaydisabled" aria-label="Play"
                                    style="background: #3CC09A; height: 50px; width: 50px; margin-left: 0px; margin-right: 20px">
                             <md-tooltip md-direction="bottom">{{play_tooltip}}</md-tooltip>
@@ -270,17 +270,17 @@
                                            class="md-primary" ng-disabled="hyperpara_disabled">
                                 </md-slider>
                                 </md-slider-container>
-                                <md-input-container>
+                                <md-input-container >
                                     <input type="number" min="1" max="150" ng-model="int_Batch" aria-label="blue" aria-controls="blue-slider" ng-disabled="hyperpara_disabled">
                                 </md-input-container >
                             </md-content>
                                </section>
 
                     <!-- Optimization -->
-                    <section>
-                        <md-input-container>
-                            <label>Optimizer</label>
-                            <md-select ng-model="optype" style="min-width: 200px; >
+                    <section style="width: 100%; margin-left: 0%; margin-right: 0%; border: none">
+                        <md-input-container style="width: 100%; margin-left: 0%; margin-right: 0%" >
+                            <label style="width: inherit">Optimizer</label>
+                            <md-select ng-model="optype" style="width: 92%; margin-right: 0%; padding-right: 0%; border: none"
                                 ng-change="AppCtrl.modelHasChanged = true" ng-disabled="hyperpara_disabled">
                                 <md-option ng-repeat="optype in strlist_optype" ng-value="optype">
                                     {{ optype }}
