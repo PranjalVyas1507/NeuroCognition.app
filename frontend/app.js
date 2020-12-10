@@ -112,9 +112,15 @@ var toggle_nav = true ;
             0, 0,
            1300, 700,
             new Two.Stop(0, colors[1]),
+            new Two.Stop(1, colors[0]),
+            new Two.Stop(1, colors[1])
+        );
+        var arrowGradient  = two.makeLinearGradient(
+            0,0,1300,700,
+            new Two.Stop(0, colors[1]),
             new Two.Stop(1, colors[5]),
             new Two.Stop(1, colors[0])
-        );
+        ) ;
         addlayer(default_layers,default_neurons) ;
 
         two.update();
@@ -161,46 +167,130 @@ var toggle_nav = true ;
             var i,j ;
             neurons_total(layers,neurons);
 
-            for(i=0;i<layers;++i)
+            if($scope.ptype === 'Classification')
             {
-                //console.log(neurons[i]);
-                init_y = 20 ;
-
-
-                for(j=0;j<neurons[i];++j)
+                for(i=0;i<layers;++i)
                 {
                     //console.log(neurons[i]);
-                    if(neurons[i]>22)
+                    init_y = 20 ;
+
+
+                    for(j=0;j<neurons[i];++j)
                     {
-                        init_y = 20 + ((j+1)*(700/(22+1))) ;
+                        //console.log(neurons[i]);
+                        if(neurons[i]>22)
+                        {
+                            init_y = 20 + ((j+1)*(700/(22+1))) ;
+                        }
+
+                        else
+                        {
+                            init_y = 20 + ((j+1)*(700/(neurons[i]+1))) ;
+                        }
+
+
+                        addneuron(init_x,init_y,20);
+
+                        abssica.push(init_x) ;
+                        ordinate.push(init_y) ;
+                        layer_index.push(i);
+
+
+                        connect_layers(init_x,init_y,i) ;
+
+
                     }
-
-                    else
-                    {
-                        init_y = 20 + ((j+1)*(700/(neurons[i]+1))) ;
-                    }
-
-
-                    addneuron(init_x,init_y,20);
-
-                    abssica.push(init_x) ;
-                    ordinate.push(init_y) ;
-                    layer_index.push(i);
-
-
-                    connect_layers(init_x,init_y,i) ;
+                    init_x = 100 + ((i+1)*(1300/(layers+1))) ;
 
 
                 }
-                init_x = 100 + ((i+1)*(1300/(layers+1))) ;
+                abssica.splice(0,abssica.length);
+                ordinate.splice(0,ordinate.length);
+                layer_index.splice(0,layer_index.length);
+                init_x = 80 ;
+                init_y = 20 ;
 
 
             }
-            abssica.splice(0,abssica.length);
-            ordinate.splice(0,ordinate.length);
-            layer_index.splice(0,layer_index.length);
-            init_x = 80 ;
-            init_y = 20 ;
+
+            else
+            {
+                var rectcent_x = 0,  height = 70, width = 70, rectcent_y = 580, diff ;
+                //$scope.LSTM_graphic();
+                two.clear() ;
+
+                for(i=0;i<layers-1;++i)
+                {
+                    //rectcent_x = 50*neurons[i].length ;
+                    for(j=0;j<neurons[i];++j)
+                    {
+                        rectcent_y =  (105*(layers-i));
+                        neuron_subset = neurons.slice(0,i);
+                        subset_max = Math.max.apply(Math,neuron_subset);
+                        if(i!=0)
+                        {
+                            if(neurons[i-1]>neurons[i])
+                            {
+                                diff = subset_max - neurons[i] ;
+                            }
+                         /*   else if(neurons[i-1]<=neurons[i])
+                            {
+                               diff = neurons[i]-neurons[i-1] ;
+                           } */
+                        }
+                        else
+                        {
+                            diff = 0 ;
+                        }
+
+                        rectcent_x = 50 + (110*(neurons[i]-j+diff));
+                        var rect = two.makeRoundedRectangle(rectcent_x,rectcent_y, height, width,9);
+                        rect.fill = '#f5f5f5';
+                        rect.stroke = 'black'; // Accepts all valid css color
+                        rect.linewidth = 0.5;
+                        var text =  two.makeText("LSTM", rectcent_x, rectcent_y, {size : 20 , family : "Arial"});
+                        text.stroke = 'black';
+                        text.fill = 'rgb(255,180,120)';
+                        if(i!=0)
+                        {
+                            if(neurons[i]>neurons[i-1])
+                            {
+                                if(j>=(neurons[i]-neurons[i-1]))
+                                {
+                                    var upward_arrow = two.makePath(rectcent_x,(rectcent_y+(height/2)),(rectcent_x+width/4),(rectcent_y+(height/2)+8),(rectcent_x-width/4),(rectcent_y+(height/2)+8),false)
+                                    upward_arrow.fill = 'black';
+                                    var upline = two.makeLine(rectcent_x,(rectcent_y+(height/2)+8),rectcent_x,(rectcent_y+(height/2)+35));
+                                    upline.fill = 'black';
+                                    upline.linewidth = 6.75 ;
+                                }
+                            }
+                            else
+                            {
+                                var upward_arrow = two.makePath(rectcent_x,(rectcent_y+(height/2)),(rectcent_x+width/4),(rectcent_y+(height/2)+8),(rectcent_x-width/4),(rectcent_y+(height/2)+8),false)
+                                upward_arrow.fill = 'black';
+                                var upline = two.makeLine(rectcent_x,(rectcent_y+(height/2)+8),rectcent_x,(rectcent_y+(height/2)+35));
+                                upline.fill = 'black';
+                                upline.linewidth = 6.75 ;
+                            }
+
+
+                        }
+                        if(j!=(neurons[i]-1))
+                        {
+                            var sidearrow = two.makePath(rectcent_x-(width/2),rectcent_y,rectcent_x-(width/2)-8,(rectcent_y+height/4),rectcent_x-(width/2)-8,(rectcent_y-height/4),true)
+                            sidearrow.fill = 'rgb(255,180,120)';
+                            sidearrow.stroke = 'rgb(255,180,120)' ;
+                            var sideline = two.makeLine(rectcent_x-(width/2)-8,rectcent_y,(rectcent_x-(width/2)-40),rectcent_y);
+                            sideline.fill = arrowGradient ;
+                            sideline.stroke = 'rgb(255,180,120)' ;
+                            sideline.linewidth = 6.75 ;
+
+                        }
+                    }
+
+                }
+
+            }
             two.update();
         }
 
@@ -365,13 +455,13 @@ var toggle_nav = true ;
                                 var y_val = ctx.dataset.data[ctx.dataIndex].y ;
 
                                 var value = ctx.dataset.data[ctx.dataIndex].v;
-                                var alpha = (value - 5) / 40;
+                                var alpha = (value) / 40;
 
                                 if((x_val+y_val)===3)
                                 {
                                     return Color('green').alpha(alpha).rgbString();
                                 }
-                                return Color('blue').alpha(alpha).rgbString();
+                                return Color('red').alpha(alpha).rgbString();
                             },
                             width: function(ctx) {
                                 var a = ctx.chart.chartArea;
@@ -706,11 +796,12 @@ var toggle_nav = true ;
                 $scope.cm.splice(0,$scope.cm.length)
                 //console.log($scope.cm);
 
-                /*var matrix_chart = document.getElementById('Prediction-Chart')
-                const context = matrix_chart.getContext('2d');
-                context.clearRect(0,0,matrix_chart.width,matrix_chart.height);*/
+              //  var matrix_chart = document.getElementById('Prediction-Chart')
+              //  const context = matrix_chart.getContext('2d');
+              //  context.clearRect(0,0,matrix_chart.width,matrix_chart.height);
 
-                $scope.chart.clear();
+               // $scope.chart.clear();
+                $scope.chart.destroy();
 
                 $scope.code = null ;
                 $scope.showgraph = false ;
@@ -738,7 +829,7 @@ var toggle_nav = true ;
                 $scope.headers.splice(0,$scope.headers.length);
 
                 // Import local excel files to the website
-                //// var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xlsx|.xls)$/;
+                    //// var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xlsx|.xls)$/;
                 var xlsxflag = false; /*Flag for checking whether excel is .xls format or .xlsx format*/
                 if ($("#xls_file").val().toLowerCase().indexOf(".xlsx") > 0) {
                     xlsxflag = true;
@@ -814,8 +905,9 @@ var toggle_nav = true ;
                         }, {})  ; */
                        //tabular_data = data ;
                         $scope.progressivebar = true;
-                        //console.log('Yeah, bitch');
+                        console.log('HTTP.POST');
                         $scope.play_tooltip = "Select Input Parameters" ;
+                        //socket.emit("Excel Upload")
                         $http.post('/data',
                             {
                                 body : data
@@ -823,10 +915,12 @@ var toggle_nav = true ;
                             });
                         $scope.Upload_btn = 'Uploaded' ;
                         $scope.Upload_btn_disable = true ;
+                        console.log("Sent Data")
 
                     });
 
                 };
+                console.log("Reading the stream now");
                 if (xlsxflag) {
                     reader.readAsArrayBuffer($("#xls_file")[0].files[0]);
 
@@ -848,7 +942,7 @@ var toggle_nav = true ;
 
         $scope.LSTM_graphic = function()
             {
-
+                addlayer(default_layers,default_neurons) ;
             };
 
 
@@ -954,7 +1048,6 @@ var toggle_nav = true ;
         };
 
 
-
             $scope.Reloadparams = function(i)
             {
                 //console.log('index:\t' + index);
@@ -1018,7 +1111,7 @@ var toggle_nav = true ;
             var n_char = "B", n_num=12, n_pos = n_char + n_num ;
             var w_char = "B", w_num = 13, w_pos = w_char + w_num ;
             var b_char = "B", b_num = 13, b_pos = b_char + b_num ;
-
+            var width_aoa = [[]] ;
 
             w = $scope.NNmodels['file'+(index+1)].weights ;
             // console.log(w[counter]);
@@ -1029,89 +1122,142 @@ var toggle_nav = true ;
            /     [1,2,3,4,5,6,7],
                 [2,3,4,5,6,7,8],
             ],{origin : "Z1"});*/
-
-            for(i=0;i<layersname.length;++i)
+            //console.log(layersname);
+            //console.log(layersname.length)
+            for(i=0;i<parseInt(layersname.length);i++)
             {
 
-                //console.log(layersname[i]);
+              //  console.log(i+ ".\t"+layersname[i]);
+              //  console.log(counter);
                 if((layersname[i].includes("dense")===true) || (layersname[i].includes("Linear")===true) )
                 {
-                    console.log(lname_pos);
+                    /*console.log(lname_pos);
                     console.log(n_pos);
                     console.log(w_pos);
-                    console.log(b_pos);
+                    console.log(b_pos); */
 
                     XLSX.utils.sheet_add_aoa(parametersWB,[[layersname[i]]],{origin : lname_pos}) ;
                     //neuron_array =
-                    console.log("layer :\t"+layersname[i]);
+                   // console.log("layer :\t"+layersname[i]);
                     //console.log(parameters.neurons,typeof parameters.neurons);
-                    no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(1);
-                    console.log("no_of neuron\t:"+ no_neurons);
-                    XLSX.utils.sheet_add_aoa(parametersWB,[no_neurons],{origin : n_pos});
+                    //no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(0);
+                    //no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(0);
+                   // console.log(w[counter]);
+                    length1 = Array.from(Array(w[counter][0].length+1).keys()).slice(1) ;
+
+                    /*width = Array.from(Array(w[counter].length+1).keys()).slice(1);
+                    for(i=0;i<width.length;++i)
+                    {
+                      width_aoa[i] = [width[i]] ;
+                    }*/
+                    //console.log(length1);
+                    width_aoa = getwidth(w[counter]);
+
+                    XLSX.utils.sheet_add_aoa(parametersWB,[length1],{origin : n_pos});
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Weights"]],{origin : "A"+n_num});
+                    XLSX.utils.sheet_add_aoa(parametersWB,width_aoa,{origin : "A"+ w_num});
                     XLSX.utils.sheet_add_aoa(parametersWB,w[counter],{origin : w_pos});
 
                     b_num = parseInt(w_num) + parseInt(w[counter].length) + 2 ;
 
-                    console.log("b_num\t"+b_num);
+              /*      console.log("b_num\t"+b_num);
                     console.log("w_num\t"+w_num);
                     console.log("wlength \t:"+w[counter].length);
-
+              */
                     b_pos = b_char + b_num ;
                    // o = str1 + str2 ;
+                    length1 = Array.from(Array(b[counter].length+1).keys()).slice(1) ;
+                    //width_aoa = getwidth(b[counter]);
+                    XLSX.utils.sheet_add_aoa(parametersWB,[length1],{origin : "B"+(b_num-1)});
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Biases"]],{origin : "A"+(b_num-1)});
+                    //XLSX.utils.sheet_add_aoa(parametersWB,width_aoa,{origin : "A"+ b_num});
                     XLSX.utils.sheet_add_aoa(parametersWB,[b[counter]],{origin : b_pos});
+                    //console.log("blength \t:"+b[counter].length);
 
-                    console.log("blength \t:"+b[counter].length);
                     lname_num = parseInt(b_num) +  5 ; //let b.length =1
                     n_num = parseInt(lname_num) +  2;
                     lname_pos = lname_char + lname_num ;
 
-                    console.log("n_num\t:"+n_num)
+                //    console.log("n_num\t:"+n_num);
 
                     n_pos = n_char + n_num ;
-                    w_num = parseInt(n_num) + 3 ;
+                    w_num = parseInt(n_num) + 1 ;
                     w_pos = w_char + w_num ;
                     counter++ ;
                 }
 
                 else if((layersname[i].includes("lstm")===true) || (layersname[i].includes("LSTM")===true) )
                 {
+                //    console.log(layersname[i]);
+                    var wh_num = 13  , wh_char = "B", wh_pos = wh_char+wh_num ;
+                    var bh_num = 13, bh_char = "B", bh_pos = bh_char + bh_num ;
+                    var temp_pos ;
+
                     weight_type = ["i","f","c","o"] ;
-                    wh = $scope.NNmodels['file'+(index+1)].hidden_weights ;
+                    var bh, wh = $scope.NNmodels['file'+(index+1)].hidden_weights ;
                     // console.log(w[counter]);
                     if(data.Framework==="PyTorch")
                     {
                         bh = $scope.NNmodels['file'+(index+1)].hidden_biases ;
                     }
-                    console.log(lname_pos);
+                  /*  console.log(lname_pos);
                     console.log(n_pos);
                     console.log(w_pos);
                     console.log(b_pos);
-
+                  */
                     XLSX.utils.sheet_add_aoa(parametersWB,[[layersname[i]]],{origin : lname_pos}) ;
 
-                    no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(1);
-                    console.log("no_of neuron\t:"+ no_neurons);
-
-                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wi"]],{origin : "B" + lname_num}) ;
+                    //no_neurons = Array.from(Array(Number(parameters.neurons.split(",")[counter])+1).keys()).splice(0);
+                    //console.log("no_of neuron\t:"+ no_neurons);
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Weights"]],{origin : "A" + (w_num-1)}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wi"]],{origin : "A" + w_num}) ;
+                    temp_pos = w[counter].length/4 ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wf"]],{origin : "A" + (w_num + temp_pos)}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wc"]],{origin : "A" + (w_num + (temp_pos*2))}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Wo"]],{origin : "A" + (w_num + (temp_pos*3))}) ;
                     XLSX.utils.sheet_add_aoa(parametersWB,w[counter],{origin : w_pos});
 
 
 
                     b_num = parseInt(w_num) + parseInt(w[counter].length) + 2 ;
 
-                    console.log("b_num\t"+b_num);
+
+
+                  /*  console.log("b_num\t"+b_num);
                     console.log("w_num\t"+w_num);
                     console.log("wlength \t:"+w[counter].length);
-
+                  */
                     b_pos = b_char + b_num ;
-                    console.log("blength \t:"+b[counter].length);
+                  //  console.log("blength \t:"+b[counter].length);
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Biases"]],{origin : "A"+(b_num-1)});
                     XLSX.utils.sheet_add_aoa(parametersWB,[b[counter]],{origin : b_pos});
 
-                    lname_num = parseInt(b_num) +  5 ; //let b.length =1
+
+                    wh_num = parseInt(b_num) + 4 ;
+                    wh_pos = wh_char + wh_num ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Hidden Weights"]],{origin : "A" + (wh_num-1)}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Whi"]],{origin : "A" + wh_num}) ;
+                    temp_pos = w[counter].length/4 ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Whf"]],{origin : "A" + (wh_num + temp_pos)}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Whc"]],{origin : "A" + (wh_num + (temp_pos*2))}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,[["Who"]],{origin : "A" + (wh_num + (temp_pos*3))}) ;
+                    XLSX.utils.sheet_add_aoa(parametersWB,wh[counter],{origin : wh_pos});
+
+                    bh_num = parseInt(wh_num) + parseInt(wh[counter].length) + 4 ;
+                    bh_pos = bh_char + bh_num ;
+
+                    if(data.Framework==="PyTorch")
+                    {
+                        XLSX.utils.sheet_add_aoa(parametersWB,[["Hidden Biases"]],{origin : "A"+(bh_num-1)});
+                        XLSX.utils.sheet_add_aoa(parametersWB,[bh[counter]],{origin : bh_pos});
+                    }
+
+
+                    lname_num = parseInt(bh_num) +  5 ; //let b.length =1
                     n_num = parseInt(lname_num) +  2;
                     lname_pos = lname_char + lname_num ;
 
-                    console.log("n_num\t:"+n_num)
+                  //  console.log("n_num\t:"+n_num);
 
                     n_pos = n_char + n_num ;
                     w_num = parseInt(n_num) + 3 ;
@@ -1119,6 +1265,7 @@ var toggle_nav = true ;
                     counter++ ;
 
                 }
+              //  console.log(i+ ".\t"+layersname[i]);
             }
 
        //  aoa1 = ["1"];
@@ -1133,6 +1280,17 @@ var toggle_nav = true ;
 
 
         };
+
+        function getwidth(parametermatrix)
+        {
+            var width_aoa = [[]];
+            width = Array.from(Array(parametermatrix.length+1).keys()).slice(1);
+            for(ii=0;ii<width.length;++ii)
+            {
+                width_aoa[ii] = [width[ii]] ;
+            }
+            return width_aoa ;
+        }
 
         $scope.DeleteDoc = function(index)
         {
